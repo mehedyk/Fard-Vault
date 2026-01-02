@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - Fard Vault</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg-gradient-start: #0b0b0b;
+      --bg-gradient-end: #121212;
+      --text-primary: #e0e0e0;
+      --text-secondary: #c2f0c2;
+      --container-bg: rgba(20, 20, 20, 0.95);
+      --accent-green: #39ff14;
+      --accent-dark: #14532d;
+      --input-bg: #111;
+      --input-border: #333;
+      --danger-red: #ff4444;
+    }
+    
+    [data-theme="light"] {
+      --bg-gradient-start: #F9FAFB;
+      --bg-gradient-end: #F9FAFB;
+      --text-primary: #111827;
+      --text-secondary: #FCD34D;
+      --container-bg: #FFFFFF;
+      --accent-green: #14532D;
+      --accent-dark: #0F4037;
+      --input-bg: #FFFFFF;
+      --input-border: #D1D5DB;
+      --danger-red: #DC2626;
+    }
+    
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .auth-container {
+      max-width: 450px;
+      width: 100%;
+      background: var(--container-bg);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(57, 255, 20, 0.1);
+      position: relative;
+    }
+    
+    [data-theme="light"] .auth-container {
+      box-shadow: 0 20px 40px rgba(20, 83, 45, 0.08);
+      border: 1px solid var(--input-border);
+    }
+    
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    
+    .theme-toggle:hover { transform: scale(1.2); }
+    
+    .auth-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .auth-header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-dark));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .auth-header p {
+      color: var(--text-secondary);
+      font-size: 0.9em;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: var(--text-primary);
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      background: var(--input-bg);
+      border: 2px solid var(--input-border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: inherit;
+      transition: all 0.3s;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent-green);
+      box-shadow: 0 0 0 3px rgba(57, 255, 20, 0.1);
+    }
+    
+    [data-theme="light"] .form-group input:focus {
+      box-shadow: 0 0 0 3px rgba(20, 83, 45, 0.1);
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent-dark), var(--accent-green));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(57, 255, 20, 0.3);
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .alert {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+    }
+    
+    .alert-error {
+      background: rgba(255, 68, 68, 0.2);
+      border: 1px solid var(--danger-red);
+      color: var(--danger-red);
+    }
+    
+    .alert-warning {
+      background: rgba(255, 193, 7, 0.2);
+      border: 1px solid #FFC107;
+      color: #FFC107;
+    }
+    
+    .alert-info {
+      background: rgba(57, 255, 20, 0.1);
+      border: 1px solid var(--accent-green);
+      color: var(--accent-green);
+    }
+    
+    .auth-footer {
+      text-align: center;
+      margin-top: 25px;
+      color: var(--text-secondary);
+      font-size: 0.9em;
+    }
+    
+    .auth-footer a {
+      color: var(--accent-green);
+      text-decoration: none;
+      font-weight: bold;
+    }
+    
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+    
+    .security-notice {
+      background: rgba(57, 255, 20, 0.05);
+      border: 1px solid var(--accent-green);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 0.85em;
+      line-height: 1.5;
+    }
+    
+    .lockout-timer {
+      text-align: center;
+      font-size: 1.2em;
+      color: var(--danger-red);
+      margin: 20px 0;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .spinner {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+      <span id="themeIcon">🌙</span>
+    </button>
+    
+    <div class="auth-header">
+      <h1>🔐 Fard Vault</h1>
+      <p>Zero-knowledge password manager</p>
+    </div>
+    
+    <div id="alertContainer"></div>
+    <div id="lockoutTimer" class="lockout-timer" style="display: none;"></div>
+    
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" required autocomplete="email" placeholder="your@email.com"/>
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Master Password</label>
+        <input type="password" id="password" required autocomplete="current-password" minlength="12" placeholder="Enter your master password"/>
+      </div>
+      
+      <button type="submit" class="btn" id="loginBtn">
+        🔓 Unlock Vault
+      </button>
+    </form>
+    
+    <div class="security-notice">
+      ⚠️ <strong>Important:</strong> Your master password is never sent to our servers. 
+      If you forget it, we cannot recover it. Your security is in your hands.
+    </div>
+    
+    <div class="auth-footer">
+      Don't have an account? <a href="/register.html">Create one</a><br>
+      <a href="/">← Back to home</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
+  
+  <script type="module">
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL';
+    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // Brute force protection
+    let failedAttempts = parseInt(localStorage.getItem('failed_attempts') || '0');
+    let lockedUntil = parseInt(localStorage.getItem('locked_until') || '0');
+    
+    function checkLockout() {
+      if (lockedUntil && Date.now() < lockedUntil) {
+        const remaining = Math.ceil((lockedUntil - Date.now()) / 1000 / 60);
+        document.getElementById('lockoutTimer').style.display = 'block';
+        document.getElementById('lockoutTimer').textContent = `⏱️ Account locked. Try again in ${remaining} minutes.`;
+        document.getElementById('loginBtn').disabled = true;
+        setTimeout(checkLockout, 1000);
+        return true;
+      } else {
+        document.getElementById('lockoutTimer').style.display = 'none';
+        document.getElementById('loginBtn').disabled = false;
+        if (lockedUntil) {
+          localStorage.removeItem('locked_until');
+          localStorage.removeItem('failed_attempts');
+          failedAttempts = 0;
+        }
+        return false;
+      }
+    }
+    
+    function showAlert(message, type = 'error') {
+      const container = document.getElementById('alertContainer');
+      container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+      setTimeout(() => container.innerHTML = '', 5000);
+    }
+    
+    window.handleLogin = async function(e) {
+      e.preventDefault();
+      
+      if (checkLockout()) {
+        showAlert('Account is locked. Please wait.', 'error');
+        return;
+      }
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('loginBtn');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner">⏳</span> Unlocking...';
+      
+      try {
+        // Sign in with Supabase
+        const {data, error} = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+        
+        if (error) throw error;
+        
+        // Get user's salt
+        const {data: keyData, error: keyError} = await supabase
+          .from('user_keys')
+          .select('salt')
+          .eq('user_id', data.user.id)
+          .single();
+        
+        if (keyError || !keyData) {
+          throw new Error('Could not load encryption keys');
+        }
+        
+        // Verify by attempting to derive key
+        const salt = Uint8Array.from(atob(keyData.salt), c => c.charCodeAt(0));
+        await argon2.hash({
+          pass: password,
+          salt: salt,
+          time: 4,
+          mem: 65536,
+          hashLen: 32,
+          parallelism: 4,
+          type: argon2.ArgonType.Argon2id
+        });
+        
+        // Success! Store master password in session
+        sessionStorage.setItem('master_password', password);
+        
+        // Reset failed attempts
+        localStorage.removeItem('failed_attempts');
+        localStorage.removeItem('locked_until');
+        
+        window.location.href = '/vault.html';
+        
+      } catch (error) {
+        console.error('Login error:', error);
+        failedAttempts++;
+        localStorage.setItem('failed_attempts', failedAttempts.toString());
+        
+        if (failedAttempts >= 5) {
+          lockedUntil = Date.now() + (15 * 60 * 1000); // 15 minutes
+          localStorage.setItem('locked_until', lockedUntil.toString());
+          showAlert('Too many failed attempts. Account locked for 15 minutes.', 'error');
+          checkLockout();
+        } else {
+          const remaining = 5 - failedAttempts;
+          showAlert(`Invalid credentials. ${remaining} attempts remaining.`, 'error');
+        }
+        
+        btn.disabled = false;
+        btn.innerHTML = '🔓 Unlock Vault';
+      }
+    };
+    
+    window.toggleTheme = function() {
+      const html = document.documentElement;
+      const icon = document.getElementById('themeIcon');
+      if (html.getAttribute('data-theme') === 'light') {
+        html.removeAttribute('data-theme');
+        icon.textContent = '🌙';
+        localStorage.setItem('theme', 'dark');
+      } else {
+        html.setAttribute('data-theme', 'light');
+        icon.textContent = '☀️';
+        localStorage.setItem('theme', 'light');
+      }
+    };
+    
+    // Initialize theme
+    const theme = localStorage.getItem('theme');
+    if (theme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.getElementById('themeIcon').textContent = '☀️';
+    }
+    
+    // Check lockout on load
+    checkLockout();
+    
+    // Check if already logged in
+    supabase.auth.getSession().then(({data: {session}}) => {
+      if (session && sessionStorage.getItem('master_password')) {
+        window.location.href = '/vault.html';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<!--
+  Fard Vault (فَرْد Vault) - Zero-knowledge password manager
+  Developed by @mehedyk (https://github.com/mehedyk)
+  License: All rights reserved. Do not reuse without explicit permission.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fard Vault - Zero-Knowledge Password Manager</title>
+  <meta name="description" content="Secure password vault with client-side encryption. Your secrets. Your control. Zero knowledge."/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/css/main.css">
+</head>
+<body>
+  <div class="landing-container">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+      <span id="themeIcon">🌙</span>
+    </button>
+
+    <header class="landing-header">
+      <h1>🔐 Fard Vault</h1>
+      <p class="subtitle">فَرْد Vault</p>
+      <p class="tagline">Your secrets. Your control. Zero knowledge.</p>
+    </header>
+
+    <main class="landing-content">
+      <section class="features">
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Zero-Knowledge Encryption</h3>
+          <p>Your passwords are encrypted on your device using AES-256-GCM. We never see your data.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Lightning Fast</h3>
+          <p>Instant access to your passwords with military-grade Argon2id key derivation.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <h3>Beautiful Interface</h3>
+          <p>Clean, modern design with dark and light themes. Seamless experience across devices.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔗</div>
+          <h3>Integrates with Fard</h3>
+          <p>Generate cryptographically secure passwords with our companion tool, Fard.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3>Maximum Security</h3>
+          <p>Bot detection, rate limiting, brute force protection, and auto-lock after inactivity.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📦</div>
+          <h3>Import & Export</h3>
+          <p>Backup your vault anytime. Export encrypted or plaintext (with confirmation).</p>
+        </div>
+      </section>
+
+      <section class="cta-section">
+        <h2>Ready to secure your passwords?</h2>
+        <div class="cta-buttons">
+          <a href="/login.html" class="btn btn-primary">Login</a>
+          <a href="/register.html" class="btn btn-secondary">Create Account</a>
+        </div>
+        <p class="security-notice">
+          🔐 <strong>Zero-Knowledge Promise:</strong> Your master password never leaves your device. 
+          If you forget it, we cannot recover it. Your security is in your hands.
+        </p>
+      </section>
+
+      <section class="how-it-works">
+        <h2>How It Works</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <h3>Create Master Password</h3>
+            <p>Choose a strong, unique master password. This is the only password you'll need to remember.</p>
+          </div>
+
+          <div class="step">
+            <div class="step-number">2</div>
+            <h3>Add Your Passwords</h3>
+            <p>Store all your passwords securely. Each one is encrypted individually with AES-256-GCM.</p>
+          </div>
+
+          <div class="step">
+            <div class="step-number">3</div>
+            <h3>Access Anywhere</h3>
+            <p>Your encrypted vault syncs across devices. Access it anytime, from anywhere.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="landing-footer">
+      <p>
+        A <a href="https://github.com/mehedyk" target="_blank" rel="noopener noreferrer">mehedyk</a> product. 
+        Works with <a href="/fard-generator.html" target="_blank">Fard Password Generator</a>.
+      </p>
+      <p>All rights reserved. &copy; <span id="currentYear"></span>.</p>
+    </footer>
+  </div>
+
+  <script type="module">
+    import { initializeTheme } from '/src/js/utils.js';
+    
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+    
+    window.toggleTheme = function() {
+      const html = document.documentElement;
+      const themeIcon = document.getElementById('themeIcon');
+      const currentTheme = html.getAttribute('data-theme');
+      
+      if(currentTheme === 'light') {
+        html.removeAttribute('data-theme');
+        themeIcon.textContent = '🌙';
+        localStorage.setItem('theme', 'dark');
+      } else {
+        html.setAttribute('data-theme', 'light');
+        themeIcon.textContent = '☀️';
+        localStorage.setItem('theme', 'light');
+      }
+    };
+    
+    initializeTheme();
+  </script>
+</body>
+</html>

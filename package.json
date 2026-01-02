@@ -1,0 +1,27 @@
+{
+  "name": "fard-vault",
+  "version": "1.0.0",
+  "description": "Zero-knowledge password vault with client-side encryption",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "password-manager",
+    "encryption",
+    "zero-knowledge",
+    "security",
+    "vault"
+  ],
+  "author": "mehedyk",
+  "license": "All Rights Reserved",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "argon2-browser": "^1.18.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

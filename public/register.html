@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Account - Fard Vault</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg-gradient-start: #0b0b0b;
+      --bg-gradient-end: #121212;
+      --text-primary: #e0e0e0;
+      --text-secondary: #c2f0c2;
+      --container-bg: rgba(20, 20, 20, 0.95);
+      --accent-green: #39ff14;
+      --accent-dark: #14532d;
+      --input-bg: #111;
+      --input-border: #333;
+      --danger-red: #ff4444;
+      --warning-yellow: #FFC107;
+    }
+    
+    [data-theme="light"] {
+      --bg-gradient-start: #F9FAFB;
+      --bg-gradient-end: #F9FAFB;
+      --text-primary: #111827;
+      --text-secondary: #FCD34D;
+      --container-bg: #FFFFFF;
+      --accent-green: #14532D;
+      --accent-dark: #0F4037;
+      --input-bg: #FFFFFF;
+      --input-border: #D1D5DB;
+      --danger-red: #DC2626;
+      --warning-yellow: #F59E0B;
+    }
+    
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .auth-container {
+      max-width: 500px;
+      width: 100%;
+      background: var(--container-bg);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(57, 255, 20, 0.1);
+      position: relative;
+    }
+    
+    [data-theme="light"] .auth-container {
+      box-shadow: 0 20px 40px rgba(20, 83, 45, 0.08);
+      border: 1px solid var(--input-border);
+    }
+    
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    
+    .theme-toggle:hover { transform: scale(1.2); }
+    
+    .auth-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .auth-header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-dark));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .auth-header p {
+      color: var(--text-secondary);
+      font-size: 0.9em;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: var(--text-primary);
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      background: var(--input-bg);
+      border: 2px solid var(--input-border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: inherit;
+      transition: all 0.3s;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent-green);
+      box-shadow: 0 0 0 3px rgba(57, 255, 20, 0.1);
+    }
+    
+    .strength-bar {
+      height: 8px;
+      background: var(--input-border);
+      border-radius: 4px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    
+    .strength-fill {
+      height: 100%;
+      transition: width 0.3s, background 0.3s;
+    }
+    
+    .strength-weak { background: var(--danger-red); width: 25%; }
+    .strength-fair { background: var(--warning-yellow); width: 50%; }
+    .strength-good { background: #17a2b8; width: 75%; }
+    .strength-strong { background: var(--accent-green); width: 100%; }
+    
+    .strength-text {
+      font-size: 0.85em;
+      margin-top: 5px;
+      color: var(--text-secondary);
+    }
+    
+    .requirements {
+      background: rgba(57, 255, 20, 0.05);
+      border: 1px solid var(--accent-green);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-size: 0.85em;
+    }
+    
+    .requirement {
+      margin: 5px 0;
+      color: var(--text-secondary);
+    }
+    
+    .requirement.met {
+      color: var(--accent-green);
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent-dark), var(--accent-green));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(57, 255, 20, 0.3);
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .alert {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+    }
+    
+    .alert-error {
+      background: rgba(255, 68, 68, 0.2);
+      border: 1px solid var(--danger-red);
+      color: var(--danger-red);
+    }
+    
+    .alert-success {
+      background: rgba(57, 255, 20, 0.2);
+      border: 1px solid var(--accent-green);
+      color: var(--accent-green);
+    }
+    
+    .auth-footer {
+      text-align: center;
+      margin-top: 25px;
+      color: var(--text-secondary);
+      font-size: 0.9em;
+    }
+    
+    .auth-footer a {
+      color: var(--accent-green);
+      text-decoration: none;
+      font-weight: bold;
+    }
+    
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+    
+    .warning-box {
+      background: rgba(255, 193, 7, 0.1);
+      border: 2px solid var(--warning-yellow);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-size: 0.9em;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .spinner {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+      <span id="themeIcon">🌙</span>
+    </button>
+    
+    <div class="auth-header">
+      <h1>🔐 Fard Vault</h1>
+      <p>Create your zero-knowledge vault</p>
+    </div>
+    
+    <div id="alertContainer"></div>
+    
+    <form id="registerForm" onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" required autocomplete="email" placeholder="your@email.com"/>
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Master Password</label>
+        <input type="password" id="password" required autocomplete="new-password" minlength="12" placeholder="Create a strong master password" oninput="checkPasswordStrength()"/>
+        <div class="strength-bar">
+          <div class="strength-fill" id="strengthBar"></div>
+        </div>
+        <div class="strength-text" id="strengthText"></div>
+      </div>
+      
+      <div class="requirements">
+        <strong>Password Requirements:</strong>
+        <div class="requirement" id="req-length">❌ At least 12 characters</div>
+        <div class="requirement" id="req-upper">❌ One uppercase letter</div>
+        <div class="requirement" id="req-lower">❌ One lowercase letter</div>
+        <div class="requirement" id="req-number">❌ One number</div>
+        <div class="requirement" id="req-special">❌ One special character</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Master Password</label>
+        <input type="password" id="confirmPassword" required autocomplete="new-password" minlength="12" placeholder="Re-enter your master password" oninput="checkPasswordMatch()"/>
+        <div class="strength-text" id="matchText"></div>
+      </div>
+      
+      <div class="warning-box">
+        ⚠️ <strong>CRITICAL WARNING:</strong> Your master password encrypts all your data. 
+        If you lose it, <strong>we cannot recover it</strong>. Write it down and store it securely.
+      </div>
+      
+      <button type="submit" class="btn" id="registerBtn" disabled>
+        🔒 Create Vault
+      </button>
+    </form>
+    
+    <div class="auth-footer">
+      Already have an account? <a href="/login.html">Login</a><br>
+      <a href="/">← Back to home</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
+  
+  <script type="module">
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL';
+    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    let requirements = {
+      length: false,
+      upper: false,
+      lower: false,
+      number: false,
+      special: false,
+      match: false
+    };
+    
+    function showAlert(message, type = 'error') {
+      const container = document.getElementById('alertContainer');
+      container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+      setTimeout(() => container.innerHTML = '', 5000);
+    }
+    
+    window.checkPasswordStrength = function() {
+      const password = document.getElementById('password').value;
+      const bar = document.getElementById('strengthBar');
+      const text = document.getElementById('strengthText');
+      
+      requirements.length = password.length >= 12;
+      requirements.upper = /[A-Z]/.test(password);
+      requirements.lower = /[a-z]/.test(password);
+      requirements.number = /[0-9]/.test(password);
+      requirements.special = /[^A-Za-z0-9]/.test(password);
+      
+      document.getElementById('req-length').className = requirements.length ? 'requirement met' : 'requirement';
+      document.getElementById('req-length').textContent = (requirements.length ? '✅' : '❌') + ' At least 12 characters';
+      
+      document.getElementById('req-upper').className = requirements.upper ? 'requirement met' : 'requirement';
+      document.getElementById('req-upper').textContent = (requirements.upper ? '✅' : '❌') + ' One uppercase letter';
+      
+      document.getElementById('req-lower').className = requirements.lower ? 'requirement met' : 'requirement';
+      document.getElementById('req-lower').textContent = (requirements.lower ? '✅' : '❌') + ' One lowercase letter';
+      
+      document.getElementById('req-number').className = requirements.number ? 'requirement met' : 'requirement';
+      document.getElementById('req-number').textContent = (requirements.number ? '✅' : '❌') + ' One number';
+      
+      document.getElementById('req-special').className = requirements.special ? 'requirement met' : 'requirement';
+      document.getElementById('req-special').textContent = (requirements.special ? '✅' : '❌') + ' One special character';
+      
+      let score = Object.values(requirements).filter(Boolean).length - 1; // Exclude match
+      
+      if (score <= 1) {
+        bar.className = 'strength-fill strength-weak';
+        text.textContent = 'Weak password';
+      } else if (score <= 3) {
+        bar.className = 'strength-fill strength-fair';
+        text.textContent = 'Fair password';
+      } else if (score <= 4) {
+        bar.className = 'strength-fill strength-good';
+        text.textContent = 'Good password';
+      } else {
+        bar.className = 'strength-fill strength-strong';
+        text.textContent = 'Very strong password';
+      }
+      
+      checkPasswordMatch();
+      updateSubmitButton();
+    };
+    
+    window.checkPasswordMatch = function() {
+      const password = document.getElementById('password').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      const matchText = document.getElementById('matchText');
+      
+      if (!confirm) {
+        matchText.textContent = '';
+        requirements.match = false;
+      } else if (password === confirm) {
+        matchText.textContent = '✅ Passwords match';
+        matchText.style.color = 'var(--accent-green)';
+        requirements.match = true;
+      } else {
+        matchText.textContent = '❌ Passwords do not match';
+        matchText.style.color = 'var(--danger-red)';
+        requirements.match = false;
+      }
+      
+      updateSubmitButton();
+    };
+    
+    function updateSubmitButton() {
+      const btn = document.getElementById('registerBtn');
+      const allMet = Object.values(requirements).every(Boolean);
+      btn.disabled = !allMet;
+    }
+    
+    window.handleRegister = async function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('registerBtn');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner">⏳</span> Creating vault...';
+      
+      try {
+        // 1. Sign up with Supabase
+        const {data: authData, error: authError} = await supabase.auth.signUp({
+          email: email,
+          password: password
+        });
+        
+        if (authError) throw authError;
+        
+        // 2. Generate salt for key derivation
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const saltBase64 = btoa(String.fromCharCode(...salt));
+        
+        // 3. Derive encryption key (verify Argon2id works)
+        await argon2.hash({
+          pass: password,
+          salt: salt,
+          time: 4,
+          mem: 65536,
+          hashLen: 32,
+          parallelism: 4,
+          type: argon2.ArgonType.Argon2id
+        });
+        
+        // 4. Store salt in database
+        const {error: keyError} = await supabase.from('user_keys').insert({
+          user_id: authData.user.id,
+          salt: saltBase64
+        });
+        
+        if (keyError) throw keyError;
+        
+        // 5. Store master password in session
+        sessionStorage.setItem('master_password', password);
+        
+        showAlert('Account created successfully! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = '/vault.html';
+        }, 1500);
+        
+      } catch (error) {
+        console.error('Registration error:', error);
+        showAlert(error.message || 'Failed to create account', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '🔒 Create Vault';
+      }
+    };
+    
+    window.toggleTheme = function() {
+      const html = document.documentElement;
+      const icon = document.getElementById('themeIcon');
+      if (html.getAttribute('data-theme') === 'light') {
+        html.removeAttribute('data-theme');
+        icon.textContent = '🌙';
+        localStorage.setItem('theme', 'dark');
+      } else {
+        html.setAttribute('data-theme', 'light');
+        icon.textContent = '☀️';
+        localStorage.setItem('theme', 'light');
+      }
+    };
+    
+    // Initialize theme
+    const theme = localStorage.getItem('theme');
+    if (theme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.getElementById('themeIcon').textContent = '☀️';
+    }
+    
+    // Check if already logged in
+    supabase.auth.getSession().then(({data: {session}}) => {
+      if (session && sessionStorage.getItem('master_password')) {
+        window.location.href = '/vault.html';
+      }
+    });
+  </script>
+</body>
+</html>
