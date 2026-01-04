@@ -442,8 +442,16 @@
   
   <script type="module">
     // Configuration
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL';
-    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    
+    // Debug: Log if env vars are missing
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      console.error('❌ Environment variables not set!');
+      console.error('VITE_SUPABASE_URL:', SUPABASE_URL || 'MISSING');
+      console.error('VITE_SUPABASE_ANON_KEY:', SUPABASE_KEY ? 'Set ✅' : 'MISSING');
+      alert('Configuration error: Environment variables not set. Check Vercel settings.');
+    }
     
     // Initialize Supabase
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);

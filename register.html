@@ -309,8 +309,17 @@
   <script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
   
   <script type="module">
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL';
-    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+    // Get environment variables with fallbacks for debugging
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    
+    // Debug: Log if env vars are missing
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      console.error('❌ Environment variables not set!');
+      console.error('VITE_SUPABASE_URL:', SUPABASE_URL || 'MISSING');
+      console.error('VITE_SUPABASE_ANON_KEY:', SUPABASE_KEY ? 'Set ✅' : 'MISSING');
+    }
+    
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
     let requirements = {
