@@ -66,45 +66,34 @@
       position: relative;
     }
     
-    .header-actions {
+    .header-nav {
       position: absolute;
-      top: 20px;
+      top: 30px;
       right: 80px;
       display: flex;
-      gap: 10px;
+      align-items: center;
+      gap: 25px;
       z-index: 5;
     }
     
-    .header-btn {
-      padding: 10px 20px;
-      background: var(--accent);
-      color: white;
+    .nav-link {
+      color: var(--text-primary);
       text-decoration: none;
-      border-radius: 8px;
-      font-size: 0.9em;
-      font-weight: bold;
+      font-size: 0.95em;
+      font-weight: 500;
       transition: all 0.3s;
-      border: 2px solid transparent;
+      cursor: pointer;
+      opacity: 0.8;
     }
     
-    .header-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(57, 255, 20, 0.3);
-    }
-    
-    .header-btn.secondary {
-      background: transparent;
-      border: 2px solid var(--accent);
+    .nav-link:hover {
+      opacity: 1;
       color: var(--accent);
+      transform: translateY(-1px);
     }
     
-    [data-theme="light"] .header-btn.secondary {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    
-    [data-theme="light"] .header-btn:hover {
-      box-shadow: 0 4px 12px rgba(20, 83, 45, 0.2);
+    html {
+      scroll-behavior: smooth;
     }
     
     .landing-header h1 {
@@ -234,10 +223,11 @@
       .landing-header h1 { font-size: 2.5em; }
       .features { grid-template-columns: 1fr; }
       .cta-buttons { flex-direction: column; }
-      .header-actions {
+      .header-nav {
         position: static;
         justify-content: center;
         margin-bottom: 20px;
+        flex-wrap: wrap;
       }
     }
   </style>
@@ -249,10 +239,14 @@
     </button>
 
     <header class="landing-header">
-      <div class="header-actions">
-        <a href="/login.html" class="header-btn secondary">Login</a>
-        <a href="/register.html" class="header-btn">Create Account</a>
-      </div>
+      <nav class="header-nav">
+        <a href="#how-it-works" class="nav-link">How to Use</a>
+        <a href="#get-started" class="nav-link">Login</a>
+        <a href="#get-started" class="nav-link">Create Account</a>
+        <!-- <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" style="position: static; width: auto; height: auto;">
+          <span id="themeIcon">🌙</span>
+        </button> -->
+      </nav>
       <h1>🔐 Fard Vault</h1>
       <p class="subtitle">فَرْد Vault</p>
       <p class="tagline">Your secrets. Your control. Zero knowledge.</p>
@@ -297,7 +291,7 @@
         </div>
       </section>
 
-      <section class="cta-section">
+      <section class="cta-section" id="get-started">
         <h2>Ready to secure your passwords?</h2>
         <div class="cta-buttons">
           <a href="/login.html" class="btn btn-primary">Login</a>
@@ -309,7 +303,7 @@
         </p>
       </section>
 
-      <section class="how-it-works">
+      <section class="how-it-works" id="how-it-works">
         <h2>How It Works</h2>
         <div class="steps">
           <div class="step">
