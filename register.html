@@ -19,15 +19,16 @@
       --accent-dark: #14532d;
       --input-bg: #111;
       --input-border: #333;
-      --danger-red: #ff4444;
-      --warning-yellow: #FFC107;
+      --info-text: #888;
+      --theme-btn-bg: rgba(255, 255, 255, 0.1);
+      --theme-btn-hover: rgba(255, 255, 255, 0.2);
     }
     
     [data-theme="light"] {
       --bg-gradient-start: #F9FAFB;
       --bg-gradient-end: #F9FAFB;
       --text-primary: #111827;
-      --text-secondary: #FCD34D;
+      --text-secondary: #059669;
       --container-bg: #FFFFFF;
       --accent-green: #14532D;
       --accent-dark: #0F4037;
@@ -35,6 +36,7 @@
       --input-border: #D1D5DB;
       --danger-red: #DC2626;
       --warning-yellow: #F59E0B;
+      --info-text: #6B7280;
     }
     
     body {
@@ -213,6 +215,8 @@
     .auth-footer {
       text-align: center;
       margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid var(--input-border);
       color: var(--text-secondary);
       font-size: 0.9em;
     }
@@ -225,6 +229,16 @@
     
     .auth-footer a:hover {
       text-decoration: underline;
+    }
+    
+    .footer-links {
+      margin-bottom: 15px;
+    }
+    
+    .footer-credit {
+      font-size: 0.85em;
+      color: var(--info-text);
+      line-height: 1.6;
     }
     
     .warning-box {
@@ -300,8 +314,15 @@
     </form>
     
     <div class="auth-footer">
-      Already have an account? <a href="/login.html">Login</a><br>
-      <a href="/">← Back to home</a>
+      <div class="footer-links">
+        Already have an account? <a href="/login.html">Login</a><br>
+        <a href="/">← Back to home</a>
+      </div>
+      <div class="footer-credit">
+        A <a href="https://github.com/mehedyk" target="_blank" rel="noopener noreferrer">mehedyk</a> product. 
+        Works with <a href="https://pw-generator-fard.netlify.app" target="_blank" rel="noopener noreferrer">Fard Password Generator</a>. 
+        All rights reserved. &copy; <span id="currentYear"></span>.
+      </div>
     </div>
   </div>
 
@@ -309,6 +330,8 @@
   <script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
   
   <script type="module">
+    // Set current year
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
     // Get environment variables with fallbacks for debugging
     const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
     const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -452,7 +475,23 @@
         
         if (keyError) throw keyError;
         
-        // 5. Store master password in session
+        // 5. Create default categories (in case trigger didn't work)
+        const defaultCategories = [
+          { user_id: authData.user.id, name: 'Social Media', icon: '🌐', color: '#1DA1F2' },
+          { user_id: authData.user.id, name: 'Banking', icon: '💳', color: '#00C853' },
+          { user_id: authData.user.id, name: 'Email', icon: '📧', color: '#EA4335' },
+          { user_id: authData.user.id, name: 'Work', icon: '💼', color: '#0078D4' },
+          { user_id: authData.user.id, name: 'Gaming', icon: '🎮', color: '#9146FF' },
+          { user_id: authData.user.id, name: 'Shopping', icon: '🛒', color: '#FF9800' },
+          { user_id: authData.user.id, name: 'Other', icon: '📁', color: '#39ff14' }
+        ];
+        
+        // Try to insert categories (ignore if trigger already created them)
+        await supabase.from('categories').insert(defaultCategories).catch(() => {
+          console.log('Categories already exist or trigger created them');
+        });
+        
+        // 6. Store master password in session
         sessionStorage.setItem('master_password', password);
         
         showAlert('Account created successfully! Redirecting...', 'success');

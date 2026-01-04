@@ -20,19 +20,21 @@
       --input-bg: #111;
       --input-border: #333;
       --danger-red: #ff4444;
+      --info-text: #888;
     }
     
     [data-theme="light"] {
       --bg-gradient-start: #F9FAFB;
       --bg-gradient-end: #F9FAFB;
       --text-primary: #111827;
-      --text-secondary: #FCD34D;
+      --text-secondary: #059669;
       --container-bg: #FFFFFF;
       --accent-green: #14532D;
       --accent-dark: #0F4037;
       --input-bg: #FFFFFF;
       --input-border: #D1D5DB;
       --danger-red: #DC2626;
+      --info-text: #6B7280;
     }
     
     body {
@@ -179,6 +181,8 @@
     .auth-footer {
       text-align: center;
       margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid var(--input-border);
       color: var(--text-secondary);
       font-size: 0.9em;
     }
@@ -191,6 +195,16 @@
     
     .auth-footer a:hover {
       text-decoration: underline;
+    }
+    
+    .footer-links {
+      margin-bottom: 15px;
+    }
+    
+    .footer-credit {
+      font-size: 0.85em;
+      color: var(--info-text);
+      line-height: 1.6;
     }
     
     .security-notice {
@@ -256,8 +270,15 @@
     </div>
     
     <div class="auth-footer">
-      Don't have an account? <a href="/register.html">Create one</a><br>
-      <a href="/">← Back to home</a>
+      <div class="footer-links">
+        Don't have an account? <a href="/register.html">Create one</a><br>
+        <a href="/">← Back to home</a>
+      </div>
+      <div class="footer-credit">
+        A <a href="https://github.com/mehedyk" target="_blank" rel="noopener noreferrer">mehedyk</a> product. 
+        Works with <a href="https://pw-generator-fard.netlify.app" target="_blank" rel="noopener noreferrer">Fard Password Generator</a>. 
+        All rights reserved. &copy; <span id="currentYear"></span>.
+      </div>
     </div>
   </div>
 
@@ -265,6 +286,8 @@
   <script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
   
   <script type="module">
+    // Set current year
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
     const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
     const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
     

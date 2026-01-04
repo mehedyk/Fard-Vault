@@ -327,6 +327,26 @@
     
     .loading { text-align: center; padding: 40px; font-size: 2em; }
     
+    .vault-footer {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 20px;
+      border-top: 1px solid var(--input-border);
+      font-size: 0.85em;
+      color: var(--text-secondary);
+      background: var(--container-bg);
+    }
+    
+    .vault-footer a {
+      color: var(--accent-green);
+      text-decoration: none;
+      font-weight: bold;
+    }
+    
+    .vault-footer a:hover {
+      text-decoration: underline;
+    }
+    
     @media (max-width: 768px) {
       .vault-container { grid-template-columns: 1fr; }
       .sidebar { border-right: none; border-bottom: 2px solid var(--input-border); }
@@ -389,6 +409,12 @@
       <div id="entriesContainer" class="loading">
         Loading your vault... 🔐
       </div>
+      
+      <footer class="vault-footer">
+        A <a href="https://github.com/mehedyk" target="_blank" rel="noopener noreferrer">mehedyk</a> product. 
+        Works with <a href="https://pw-generator-fard.netlify.app" target="_blank" rel="noopener noreferrer">Fard Password Generator</a>. 
+        All rights reserved. &copy; <span id="vaultYear"></span>.
+      </footer>
     </main>
   </div>
   
@@ -772,6 +798,9 @@
       document.documentElement.setAttribute('data-theme', 'light');
       document.getElementById('themeIcon').textContent = '☀️';
     }
+    
+    // Set year
+    document.getElementById('vaultYear').textContent = new Date().getFullYear();
     
     initVault();
   </script>
