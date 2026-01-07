@@ -842,12 +842,52 @@
     };
     
     window.exportVault = async function() {
-      if (!confirm('Export your vault? This will create an encrypted backup file.')) return;
+      // Ask user for export format
+      const exportModal = `
+        <div class="modal active" id="exportModal" onclick="if(event.target === this) closeExportModal()">
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+              <h2 class="modal-title">📤 Export Vault</h2>
+              <button class="close-btn" onclick="closeExportModal()">&times;</button>
+            </div>
+            <div style="padding: 20px 0;">
+              <p style="margin-bottom: 20px;">Choose export format:</p>
+              
+              <button class="btn" onclick="doExport(true)" style="width: 100%; margin-bottom: 15px; background: #28a745;">
+                🔒 Encrypted Export (Recommended)
+                <div style="font-size: 0.85em; font-weight: normal; margin-top: 5px;">
+                  Password-protected, safe to store anywhere
+                </div>
+              </button>
+              
+              <button class="btn btn-danger" onclick="doExport(false)" style="width: 100%;">
+                ⚠️ Plain Text Export (Not Recommended)
+                <div style="font-size: 0.85em; font-weight: normal; margin-top: 5px;">
+                  Unencrypted, keep this file secure!
+                </div>
+              </button>
+            </div>
+            <button class="btn btn-secondary" onclick="closeExportModal()" style="width: 100%;">Cancel</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', exportModal);
+    };
+    
+    window.closeExportModal = function() {
+      const modal = document.getElementById('exportModal');
+      if (modal) modal.remove();
+    };
+    
+    window.doExport = async function(encrypted) {
+      closeExportModal();
       
       try {
         const vaultData = {
           version: '1.0',
           exported: new Date().toISOString(),
+          encrypted: encrypted,
           entries: allEntries.map(entry => ({
             id: entry.id,
             title: entry.title,
@@ -860,18 +900,52 @@
           }))
         };
         
-        const dataStr = JSON.stringify(vaultData, null, 2);
+        let dataStr;
+        let filename;
+        
+        if (encrypted) {
+          // Encrypt the export with master password
+          const masterPassword = sessionStorage.getItem('master_password');
+          if (!masterPassword) {
+            showNotification('Session expired. Please login again.', 'error');
+            return;
+          }
+          
+          // Use current encryption key to encrypt export
+          const {encrypted: encryptedData, iv} = await encryptData(vaultData, encryptionKey);
+          
+          const exportPackage = {
+            version: '1.0',
+            encrypted: true,
+            data: encryptedData,
+            iv: iv,
+            exported: new Date().toISOString()
+          };
+          
+          dataStr = JSON.stringify(exportPackage, null, 2);
+          filename = `fard-vault-encrypted-${new Date().toISOString().split('T')[0]}.json`;
+          showNotification('✅ Encrypted export created!', 'success');
+        } else {
+          // Plain text export with warning
+          if (!confirm('⚠️ WARNING: This will export your passwords in PLAIN TEXT!\n\nAnyone who gets this file can read all your passwords.\n\nAre you absolutely sure?')) {
+            return;
+          }
+          
+          dataStr = JSON.stringify(vaultData, null, 2);
+          filename = `fard-vault-PLAINTEXT-${new Date().toISOString().split('T')[0]}.json`;
+          showNotification('⚠️ Plain text export created. Keep secure!', 'warning');
+        }
+        
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `fard-vault-backup-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         
-        showNotification('Vault exported successfully!', 'success');
       } catch (error) {
         console.error('Export error:', error);
         showNotification('Failed to export vault', 'error');
@@ -890,15 +964,38 @@
           const text = await file.text();
           const data = JSON.parse(text);
           
-          if (!data.entries || !Array.isArray(data.entries)) {
+          let entries;
+          
+          // Check if encrypted
+          if (data.encrypted && data.data && data.iv) {
+            // Encrypted export
+            showNotification('Decrypting import file...', 'info');
+            
+            try {
+              const decryptedData = await decryptData(data.data, data.iv, encryptionKey);
+              entries = decryptedData.entries;
+            } catch (decryptError) {
+              showNotification('❌ Failed to decrypt. Wrong master password?', 'error');
+              return;
+            }
+          } else if (data.entries && Array.isArray(data.entries)) {
+            // Plain text export
+            entries = data.entries;
+          } else {
             throw new Error('Invalid backup file format');
           }
           
-          if (!confirm(`Import ${data.entries.length} entries? This will add them to your vault.`)) {
+          if (!entries || entries.length === 0) {
+            showNotification('No entries found in backup file', 'warning');
             return;
           }
           
-          for (const entry of data.entries) {
+          if (!confirm(`Import ${entries.length} entries? This will add them to your vault.`)) {
+            return;
+          }
+          
+          let imported = 0;
+          for (const entry of entries) {
             const {encrypted, iv} = await encryptData({
               title: entry.title,
               username: entry.username,
@@ -907,16 +1004,18 @@
               notes: entry.notes
             }, encryptionKey);
             
-            await supabase.from('vault_entries').insert({
+            const {error} = await supabase.from('vault_entries').insert({
               user_id: currentUser.id,
               encrypted_data: encrypted,
               iv: iv,
               auth_tag: '',
               category: entry.category || 'other'
             });
+            
+            if (!error) imported++;
           }
           
-          showNotification(`Successfully imported ${data.entries.length} entries!`, 'success');
+          showNotification(`✅ Successfully imported ${imported} entries!`, 'success');
           await loadEntries();
         } catch (error) {
           console.error('Import error:', error);
@@ -1025,8 +1124,8 @@
     window.showHealthDashboard = function() {
       const health = analyzeVaultHealth();
       const dashboardHTML = `
-        <div class="modal active" onclick="if(event.target === this) closeHealthDashboard()">
-          <div class="modal-content" style="max-width: 600px;">
+        <div class="modal active" onclick="if(event.target === this) closeHealthDashboard()" id="healthModal">
+          <div class="modal-content" style="max-width: 600px;" onclick="event.stopPropagation()">
             <div class="modal-header">
               <h2 class="modal-title">🏥 Vault Health Dashboard</h2>
               <button class="close-btn" onclick="closeHealthDashboard()">&times;</button>
@@ -1066,8 +1165,8 @@
     };
     
     window.closeHealthDashboard = function() {
-      const modal = document.querySelector('.modal');
-      if (modal && modal.querySelector('.modal-title')?.textContent.includes('Health')) {
+      const modal = document.getElementById('healthModal');
+      if (modal) {
         modal.remove();
       }
     };
