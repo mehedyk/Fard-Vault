@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- SECURITY FIX: Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://api.pwnedpasswords.com; img-src 'self' data:;">
   <title>Fard Vault - Your Passwords</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -368,14 +370,8 @@
     }
     
     @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
     
     .entry-card {
@@ -384,7 +380,7 @@
     
     @keyframes successPulse {
       0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+      50%       { transform: scale(1.05); }
     }
     
     .success-animation {
@@ -429,30 +425,14 @@
       </div>
       
       <ul class="category-list" id="categoryList">
-        <li class="category-item active" data-category="all">
-          <span>📁</span> All Passwords
-        </li>
-        <li class="category-item" data-category="social">
-          <span>🌐</span> Social Media
-        </li>
-        <li class="category-item" data-category="banking">
-          <span>💳</span> Banking
-        </li>
-        <li class="category-item" data-category="email">
-          <span>📧</span> Email
-        </li>
-        <li class="category-item" data-category="work">
-          <span>💼</span> Work
-        </li>
-        <li class="category-item" data-category="gaming">
-          <span>🎮</span> Gaming
-        </li>
-        <li class="category-item" data-category="shopping">
-          <span>🛒</span> Shopping
-        </li>
-        <li class="category-item" data-category="other">
-          <span>📦</span> Other
-        </li>
+        <li class="category-item active" data-category="all"><span>📁</span> All Passwords</li>
+        <li class="category-item" data-category="social"><span>🌐</span> Social Media</li>
+        <li class="category-item" data-category="banking"><span>💳</span> Banking</li>
+        <li class="category-item" data-category="email"><span>📧</span> Email</li>
+        <li class="category-item" data-category="work"><span>💼</span> Work</li>
+        <li class="category-item" data-category="gaming"><span>🎮</span> Gaming</li>
+        <li class="category-item" data-category="shopping"><span>🛒</span> Shopping</li>
+        <li class="category-item" data-category="other"><span>📦</span> Other</li>
       </ul>
       
       <div style="margin-top: 30px;">
@@ -522,6 +502,7 @@
         </div>
         <div class="form-group">
           <label>Website URL</label>
+          <!-- SECURITY FIX: type="url" enforces http/https at browser level; JS also validates scheme -->
           <input type="url" id="entryUrl" placeholder="https://example.com"/>
         </div>
         <div class="form-group">
@@ -549,11 +530,9 @@
   <script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
   
   <script type="module">
-    // Configuration
     const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
     const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
     
-    // Debug: Log if env vars are missing
     if (!SUPABASE_URL || !SUPABASE_KEY) {
       console.error('❌ Environment variables not set!');
       console.error('VITE_SUPABASE_URL:', SUPABASE_URL || 'MISSING');
@@ -561,16 +540,22 @@
       alert('Configuration error: Environment variables not set. Check Vercel settings.');
     }
     
-    // Initialize Supabase
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
     // Global state
-    let currentUser = null;
-    let encryptionKey = null;
-    let allEntries = [];
+    let currentUser    = null;
+    let encryptionKey  = null;
+    let allEntries     = [];
     let currentCategory = 'all';
     let editingEntryId = null;
-    
+
+    // ── SECURITY FIX: In-memory entry registry ────────────────────────────────
+    // Decrypted entries are stored in a Map keyed by ID.
+    // DOM card buttons reference ONLY the ID, never embedding plaintext or
+    // base64-encoded passwords as onclick attribute strings.
+    const entryRegistry = new Map();
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Crypto utilities
     async function deriveKey(password, salt) {
       const result = await argon2.hash({
@@ -586,52 +571,49 @@
     }
     
     async function encryptData(data, key) {
-      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const iv          = crypto.getRandomValues(new Uint8Array(12));
       const encodedData = new TextEncoder().encode(JSON.stringify(data));
-      const cryptoKey = await crypto.subtle.importKey(
-        'raw', key, {name: 'AES-GCM'}, false, ['encrypt']
-      );
-      const encrypted = await crypto.subtle.encrypt(
-        {name: 'AES-GCM', iv}, cryptoKey, encodedData
-      );
+      const cryptoKey   = await crypto.subtle.importKey('raw', key, { name: 'AES-GCM' }, false, ['encrypt']);
+      const encrypted   = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, cryptoKey, encodedData);
       return {
         encrypted: btoa(String.fromCharCode(...new Uint8Array(encrypted))),
-        iv: btoa(String.fromCharCode(...iv))
+        iv:        btoa(String.fromCharCode(...iv))
       };
     }
     
     async function decryptData(encryptedData, iv, key) {
-      const cryptoKey = await crypto.subtle.importKey(
-        'raw', key, {name: 'AES-GCM'}, false, ['decrypt']
-      );
+      const cryptoKey      = await crypto.subtle.importKey('raw', key, { name: 'AES-GCM' }, false, ['decrypt']);
       const encryptedBytes = Uint8Array.from(atob(encryptedData), c => c.charCodeAt(0));
-      const ivBytes = Uint8Array.from(atob(iv), c => c.charCodeAt(0));
-      const decrypted = await crypto.subtle.decrypt(
-        {name: 'AES-GCM', iv: ivBytes}, cryptoKey, encryptedBytes
-      );
+      const ivBytes        = Uint8Array.from(atob(iv),            c => c.charCodeAt(0));
+      const decrypted      = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ivBytes }, cryptoKey, encryptedBytes);
       return JSON.parse(new TextDecoder().decode(decrypted));
     }
+
+    // ── SECURITY FIX: URL scheme validation ──────────────────────────────────
+    // Blocks javascript:, data:, and any other non-http(s) schemes from being
+    // rendered as clickable links, preventing potential XSS via URL fields.
+    function isSafeUrl(url) {
+      if (!url) return false;
+      try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+      } catch {
+        return false;
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
     
     // Initialize vault
     async function initVault() {
-      const {data: {user}} = await supabase.auth.getUser();
-      if (!user) {
-        window.location.href = '/login.html';
-        return;
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { window.location.href = '/login.html'; return; }
       currentUser = user;
       
       const masterPassword = sessionStorage.getItem('master_password');
-      if (!masterPassword) {
-        window.location.href = '/login.html';
-        return;
-      }
+      if (!masterPassword) { window.location.href = '/login.html'; return; }
       
-      const {data: keyData} = await supabase.from('user_keys').select('salt').eq('user_id', user.id).single();
-      if (!keyData) {
-        showNotification('Error loading vault', 'error');
-        return;
-      }
+      const { data: keyData } = await supabase.from('user_keys').select('salt').eq('user_id', user.id).single();
+      if (!keyData) { showNotification('Error loading vault', 'error'); return; }
       
       const salt = Uint8Array.from(atob(keyData.salt), c => c.charCodeAt(0));
       encryptionKey = await deriveKey(masterPassword, salt);
@@ -640,23 +622,24 @@
     }
     
     async function loadEntries() {
-      const {data, error} = await supabase.from('vault_entries').select('*').eq('user_id', currentUser.id);
-      if (error) {
-        showNotification('Error loading entries', 'error');
-        return;
-      }
+      const { data, error } = await supabase.from('vault_entries').select('*').eq('user_id', currentUser.id);
+      if (error) { showNotification('Error loading entries', 'error'); return; }
       
       allEntries = [];
+      entryRegistry.clear();  // reset registry on each load
+
       for (const entry of data) {
         try {
           const decrypted = await decryptData(entry.encrypted_data, entry.iv, encryptionKey);
-          allEntries.push({
-            id: entry.id,
-            category: entry.category,
-            favorite: entry.favorite,
+          const full = {
+            id:         entry.id,
+            category:   entry.category,
+            favorite:   entry.favorite,
             created_at: entry.created_at,
             ...decrypted
-          });
+          };
+          allEntries.push(full);
+          entryRegistry.set(entry.id, full);  // store in registry for safe DOM access
         } catch (e) {
           console.error('Failed to decrypt entry:', e);
         }
@@ -666,13 +649,15 @@
     }
     
     function renderEntries() {
-      const container = document.getElementById('entriesContainer');
-      let filtered = currentCategory === 'all' ? allEntries : allEntries.filter(e => e.category === currentCategory);
+      const container  = document.getElementById('entriesContainer');
+      let filtered = currentCategory === 'all'
+        ? allEntries
+        : allEntries.filter(e => e.category === currentCategory);
       
       const searchTerm = document.getElementById('searchBox').value.toLowerCase();
       if (searchTerm) {
-        filtered = filtered.filter(e => 
-          e.title?.toLowerCase().includes(searchTerm) || 
+        filtered = filtered.filter(e =>
+          e.title?.toLowerCase().includes(searchTerm) ||
           e.username?.toLowerCase().includes(searchTerm)
         );
       }
@@ -683,11 +668,13 @@
             <div class="empty-state-icon">🔐</div>
             <h2>No passwords yet</h2>
             <p>Click "New Password" to add your first entry</p>
-          </div>
-        `;
+          </div>`;
         return;
       }
-      
+
+      // ── SECURITY FIX: No passwords or sensitive data in DOM attributes ──
+      // Each card uses only the UUID as an identifier in onclick handlers.
+      // Toggling/copying looks up the value from entryRegistry at call time.
       container.innerHTML = '<div class="entries-grid">' + filtered.map(entry => `
         <div class="entry-card">
           <div class="entry-header">
@@ -701,21 +688,31 @@
           ${entry.username ? `
             <div class="entry-field">
               <label>Username</label>
-              <div>${escapeHtml(entry.username)} <button class="icon-btn" onclick="copyText('${escapeHtml(entry.username)}')">📋</button></div>
+              <div>
+                ${escapeHtml(entry.username)}
+                <button class="icon-btn" onclick="copyEntryField('${entry.id}','username')" title="Copy username">📋</button>
+              </div>
             </div>
           ` : ''}
           <div class="entry-field">
             <label>Password</label>
             <div class="password-field">
               <span class="password-value password-hidden" id="pwd-${entry.id}">••••••••••••</span>
-              <button class="icon-btn" onclick="togglePassword('${entry.id}', '${btoa(entry.password)}')">👁️</button>
-              <button class="icon-btn" onclick="copyText('${btoa(entry.password)}', true)">📋</button>
+              <button class="icon-btn" onclick="togglePassword('${entry.id}')" title="Show/hide">👁️</button>
+              <button class="icon-btn" onclick="copyEntryField('${entry.id}','password')" title="Copy password">📋</button>
             </div>
           </div>
-          ${entry.url ? `
+          ${isSafeUrl(entry.url) ? `
             <div class="entry-field">
               <label>Website</label>
-              <a href="${escapeHtml(entry.url)}" target="_blank" style="color: var(--accent-green);">🔗 ${escapeHtml(entry.url)}</a>
+              <a href="${escapeHtml(entry.url)}" target="_blank" rel="noopener noreferrer" style="color: var(--accent-green);">
+                🔗 ${escapeHtml(entry.url)}
+              </a>
+            </div>
+          ` : entry.url ? `
+            <div class="entry-field">
+              <label>Website</label>
+              <span style="color: var(--text-secondary);">${escapeHtml(entry.url)}</span>
             </div>
           ` : ''}
         </div>
@@ -724,26 +721,44 @@
     
     function escapeHtml(text) {
       const div = document.createElement('div');
-      div.textContent = text;
+      div.textContent = text || '';
       return div.innerHTML;
     }
-    
-    window.togglePassword = function(id, encoded) {
-      const el = document.getElementById(`pwd-${id}`);
+
+    // ── SECURITY FIX: Registry-based reveal ──────────────────────────────────
+    // Reads password from in-memory Map — never from DOM attributes.
+    window.togglePassword = function(id) {
+      const el    = document.getElementById(`pwd-${id}`);
+      const entry = entryRegistry.get(id);
+      if (!entry) return;
       if (el.classList.contains('password-hidden')) {
-        el.textContent = atob(encoded);
+        el.textContent = entry.password;
         el.classList.remove('password-hidden');
       } else {
         el.textContent = '••••••••••••';
         el.classList.add('password-hidden');
       }
     };
-    
-    window.copyText = function(text, isBase64 = false) {
-      const decoded = isBase64 ? atob(text) : text;
-      navigator.clipboard.writeText(decoded);
+
+    // ── SECURITY FIX: Registry-based clipboard copy ───────────────────────────
+    window.copyEntryField = function(id, field) {
+      const entry = entryRegistry.get(id);
+      if (!entry) return;
+      navigator.clipboard.writeText(entry[field] || '');
+      showNotification('Copied to clipboard!', 'success');
+
+      // Auto-clear clipboard after 30 seconds
+      setTimeout(() => {
+        navigator.clipboard.writeText('').catch(() => {});
+      }, 30000);
+    };
+
+    // Keep legacy copyText for any other uses (export confirmations, etc.)
+    window.copyText = function(text) {
+      navigator.clipboard.writeText(text);
       showNotification('Copied to clipboard!', 'success');
     };
+    // ─────────────────────────────────────────────────────────────────────────
     
     window.openAddModal = function() {
       editingEntryId = null;
@@ -753,17 +768,17 @@
     };
     
     window.editEntry = function(id) {
-      const entry = allEntries.find(e => e.id === id);
+      const entry = entryRegistry.get(id);
       if (!entry) return;
       
       editingEntryId = id;
       document.getElementById('modalTitle').textContent = 'Edit Password';
-      document.getElementById('entryTitle').value = entry.title || '';
+      document.getElementById('entryTitle').value    = entry.title    || '';
       document.getElementById('entryUsername').value = entry.username || '';
       document.getElementById('entryPassword').value = entry.password || '';
-      document.getElementById('entryUrl').value = entry.url || '';
+      document.getElementById('entryUrl').value      = entry.url      || '';
       document.getElementById('entryCategory').value = entry.category || 'other';
-      document.getElementById('entryNotes').value = entry.notes || '';
+      document.getElementById('entryNotes').value    = entry.notes    || '';
       document.getElementById('entryModal').classList.add('active');
     };
     
@@ -774,42 +789,44 @@
     window.saveEntry = async function(e) {
       e.preventDefault();
       
+      const rawUrl  = document.getElementById('entryUrl').value.trim();
+
+      // ── SECURITY FIX: Reject unsafe URL schemes before save ──────────────
+      if (rawUrl && !isSafeUrl(rawUrl)) {
+        showNotification('❌ URL must start with https:// or http://', 'error');
+        return;
+      }
+
       const data = {
-        title: document.getElementById('entryTitle').value,
+        title:    document.getElementById('entryTitle').value,
         username: document.getElementById('entryUsername').value,
         password: document.getElementById('entryPassword').value,
-        url: document.getElementById('entryUrl').value,
-        notes: document.getElementById('entryNotes').value
+        url:      rawUrl,
+        notes:    document.getElementById('entryNotes').value
       };
       
-      const category = document.getElementById('entryCategory').value;
-      const {encrypted, iv} = await encryptData(data, encryptionKey);
+      const category         = document.getElementById('entryCategory').value;
+      const { encrypted, iv } = await encryptData(data, encryptionKey);
       
       if (editingEntryId) {
-        const {error} = await supabase.from('vault_entries').update({
+        const { error } = await supabase.from('vault_entries').update({
           encrypted_data: encrypted,
-          iv: iv,
-          category: category
+          iv:             iv,
+          category:       category
         }).eq('id', editingEntryId);
         
-        if (error) {
-          showNotification('Error updating entry', 'error');
-          return;
-        }
+        if (error) { showNotification('Error updating entry', 'error'); return; }
         showNotification('Entry updated!', 'success');
       } else {
-        const {error} = await supabase.from('vault_entries').insert({
-          user_id: currentUser.id,
+        const { error } = await supabase.from('vault_entries').insert({
+          user_id:        currentUser.id,
           encrypted_data: encrypted,
-          iv: iv,
-          auth_tag: '',
-          category: category
+          iv:             iv,
+          auth_tag:       '',
+          category:       category
         });
         
-        if (error) {
-          showNotification('Error adding entry', 'error');
-          return;
-        }
+        if (error) { showNotification('Error adding entry', 'error'); return; }
         showNotification('Entry added!', 'success');
       }
       
@@ -820,12 +837,10 @@
     window.deleteEntry = async function(id) {
       if (!confirm('Delete this password?')) return;
       
-      const {error} = await supabase.from('vault_entries').delete().eq('id', id);
-      if (error) {
-        showNotification('Error deleting entry', 'error');
-        return;
-      }
+      const { error } = await supabase.from('vault_entries').delete().eq('id', id);
+      if (error) { showNotification('Error deleting entry', 'error'); return; }
       
+      entryRegistry.delete(id);
       showNotification('Entry deleted', 'success');
       await loadEntries();
     };
@@ -842,7 +857,6 @@
     };
     
     window.exportVault = async function() {
-      // Ask user for export format
       const exportModal = `
         <div class="modal active" id="exportModal" onclick="if(event.target === this) closeExportModal()">
           <div class="modal-content" onclick="event.stopPropagation()">
@@ -852,26 +866,18 @@
             </div>
             <div style="padding: 20px 0;">
               <p style="margin-bottom: 20px;">Choose export format:</p>
-              
               <button class="btn" onclick="doExport(true)" style="width: 100%; margin-bottom: 15px; background: #28a745;">
                 🔒 Encrypted Export (Recommended)
-                <div style="font-size: 0.85em; font-weight: normal; margin-top: 5px;">
-                  Password-protected, safe to store anywhere
-                </div>
+                <div style="font-size: 0.85em; font-weight: normal; margin-top: 5px;">Password-protected, safe to store anywhere</div>
               </button>
-              
               <button class="btn btn-danger" onclick="doExport(false)" style="width: 100%;">
                 ⚠️ Plain Text Export (Not Recommended)
-                <div style="font-size: 0.85em; font-weight: normal; margin-top: 5px;">
-                  Unencrypted, keep this file secure!
-                </div>
+                <div style="font-size: 0.85em; font-weight: normal; margin-top: 5px;">Unencrypted, keep this file secure!</div>
               </button>
             </div>
             <button class="btn btn-secondary" onclick="closeExportModal()" style="width: 100%;">Cancel</button>
           </div>
-        </div>
-      `;
-      
+        </div>`;
       document.body.insertAdjacentHTML('beforeend', exportModal);
     };
     
@@ -885,61 +891,44 @@
       
       try {
         const vaultData = {
-          version: '1.0',
+          version:  '1.0',
           exported: new Date().toISOString(),
-          encrypted: encrypted,
-          entries: allEntries.map(entry => ({
-            id: entry.id,
-            title: entry.title,
-            username: entry.username,
-            password: entry.password,
-            url: entry.url,
-            notes: entry.notes,
-            category: entry.category,
+          encrypted,
+          entries:  allEntries.map(entry => ({
+            id:         entry.id,
+            title:      entry.title,
+            username:   entry.username,
+            password:   entry.password,
+            url:        entry.url,
+            notes:      entry.notes,
+            category:   entry.category,
             created_at: entry.created_at
           }))
         };
         
-        let dataStr;
-        let filename;
+        let dataStr, filename;
         
         if (encrypted) {
-          // Encrypt the export with master password
           const masterPassword = sessionStorage.getItem('master_password');
-          if (!masterPassword) {
-            showNotification('Session expired. Please login again.', 'error');
-            return;
-          }
+          if (!masterPassword) { showNotification('Session expired. Please login again.', 'error'); return; }
           
-          // Use current encryption key to encrypt export
-          const {encrypted: encryptedData, iv} = await encryptData(vaultData, encryptionKey);
+          const { encrypted: encryptedData, iv } = await encryptData(vaultData, encryptionKey);
           
-          const exportPackage = {
-            version: '1.0',
-            encrypted: true,
-            data: encryptedData,
-            iv: iv,
-            exported: new Date().toISOString()
-          };
-          
-          dataStr = JSON.stringify(exportPackage, null, 2);
+          dataStr  = JSON.stringify({ version: '1.0', encrypted: true, data: encryptedData, iv, exported: new Date().toISOString() }, null, 2);
           filename = `fard-vault-encrypted-${new Date().toISOString().split('T')[0]}.json`;
           showNotification('✅ Encrypted export created!', 'success');
         } else {
-          // Plain text export with warning
-          if (!confirm('⚠️ WARNING: This will export your passwords in PLAIN TEXT!\n\nAnyone who gets this file can read all your passwords.\n\nAre you absolutely sure?')) {
-            return;
-          }
+          if (!confirm('⚠️ WARNING: This will export your passwords in PLAIN TEXT!\n\nAnyone who gets this file can read all your passwords.\n\nAre you absolutely sure?')) return;
           
-          dataStr = JSON.stringify(vaultData, null, 2);
+          dataStr  = JSON.stringify(vaultData, null, 2);
           filename = `fard-vault-PLAINTEXT-${new Date().toISOString().split('T')[0]}.json`;
           showNotification('⚠️ Plain text export created. Keep secure!', 'warning');
         }
         
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = url;
+        link.href     = url;
         link.download = filename;
         document.body.appendChild(link);
         link.click();
@@ -954,7 +943,7 @@
     
     window.importVault = function() {
       const input = document.createElement('input');
-      input.type = 'file';
+      input.type   = 'file';
       input.accept = '.json';
       input.onchange = async (e) => {
         const file = e.target.files[0];
@@ -966,11 +955,8 @@
           
           let entries;
           
-          // Check if encrypted
           if (data.encrypted && data.data && data.iv) {
-            // Encrypted export
             showNotification('Decrypting import file...', 'info');
-            
             try {
               const decryptedData = await decryptData(data.data, data.iv, encryptionKey);
               entries = decryptedData.entries;
@@ -979,7 +965,6 @@
               return;
             }
           } else if (data.entries && Array.isArray(data.entries)) {
-            // Plain text export
             entries = data.entries;
           } else {
             throw new Error('Invalid backup file format');
@@ -990,26 +975,24 @@
             return;
           }
           
-          if (!confirm(`Import ${entries.length} entries? This will add them to your vault.`)) {
-            return;
-          }
+          if (!confirm(`Import ${entries.length} entries? This will add them to your vault.`)) return;
           
           let imported = 0;
           for (const entry of entries) {
-            const {encrypted, iv} = await encryptData({
-              title: entry.title,
+            const { encrypted, iv } = await encryptData({
+              title:    entry.title,
               username: entry.username,
               password: entry.password,
-              url: entry.url,
-              notes: entry.notes
+              url:      entry.url,
+              notes:    entry.notes
             }, encryptionKey);
             
-            const {error} = await supabase.from('vault_entries').insert({
-              user_id: currentUser.id,
+            const { error } = await supabase.from('vault_entries').insert({
+              user_id:        currentUser.id,
               encrypted_data: encrypted,
-              iv: iv,
-              auth_tag: '',
-              category: entry.category || 'other'
+              iv,
+              auth_tag:       '',
+              category:       entry.category || 'other'
             });
             
             if (!error) imported++;
@@ -1041,36 +1024,31 @@
     
     function showNotification(message, type = 'success') {
       document.querySelectorAll('.notification').forEach(n => n.remove());
-      
       const notif = document.createElement('div');
-      notif.className = `notification ${type}`;
+      notif.className  = `notification ${type}`;
       notif.textContent = message;
       document.body.appendChild(notif);
       setTimeout(() => notif.remove(), 3000);
     }
     
-    // Password Breach Check
+    // Password Breach Check (HaveIBeenPwned k-anonymity — only 5-char prefix sent)
     async function checkPasswordBreach(password) {
       try {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(password);
+        const encoder    = new TextEncoder();
+        const data       = encoder.encode(password);
         const hashBuffer = await crypto.subtle.digest('SHA-1', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+        const hashHex    = Array.from(new Uint8Array(hashBuffer))
+          .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
         
         const prefix = hashHex.slice(0, 5);
         const suffix = hashHex.slice(5);
         
         const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
-        const text = await response.text();
+        const text     = await response.text();
         
         if (text.includes(suffix)) {
           const count = text.split('\n').find(line => line.startsWith(suffix))?.split(':')[1] || '0';
-          return { 
-            compromised: true, 
-            count: parseInt(count),
-            message: `Found in ${parseInt(count).toLocaleString()} breaches!` 
-          };
+          return { compromised: true, count: parseInt(count), message: `Found in ${parseInt(count).toLocaleString()} breaches!` };
         }
         return { compromised: false, message: 'Not found in breaches' };
       } catch (error) {
@@ -1079,7 +1057,7 @@
     }
     
     window.checkEntryBreach = async function(entryId) {
-      const entry = allEntries.find(e => e.id === entryId);
+      const entry = entryRegistry.get(entryId);
       if (!entry) return;
       
       showNotification('Checking for breaches...', 'info');
@@ -1112,11 +1090,11 @@
       });
       
       const total = allEntries.length;
-      return { 
+      return {
         total, weak, reused, old, strong,
-        weakPercent: Math.round((weak / total) * 100) || 0,
+        weakPercent:   Math.round((weak   / total) * 100) || 0,
         reusedPercent: Math.round((reused / total) * 100) || 0,
-        oldPercent: Math.round((old / total) * 100) || 0,
+        oldPercent:    Math.round((old    / total) * 100) || 0,
         strongPercent: Math.round((strong / total) * 100) || 0
       };
     }
@@ -1151,24 +1129,22 @@
               </div>
               <div style="background: var(--card-bg); padding: 15px; border-radius: 10px;">
                 <h3 style="margin-bottom: 10px;">📊 Recommendations</h3>
-                ${health.weak > 0 ? `<p style="color: #ff4444; margin: 5px 0;">🔴 Update ${health.weak} weak passwords</p>` : ''}
-                ${health.reused > 0 ? `<p style="color: #ffc107; margin: 5px 0;">🟡 ${health.reused} passwords are reused</p>` : ''}
-                ${health.old > 0 ? `<p style="color: #17a2b8; margin: 5px 0;">🔵 ${health.old} passwords are 6+ months old</p>` : ''}
-                ${health.weak === 0 && health.reused === 0 && health.old === 0 ? `<p style="color: #28a745;">✅ Excellent vault health!</p>` : ''}
+                ${health.weak   > 0 ? `<p style="color: #ff4444; margin: 5px 0;">🔴 Update ${health.weak} weak passwords</p>`     : ''}
+                ${health.reused > 0 ? `<p style="color: #ffc107; margin: 5px 0;">🟡 ${health.reused} passwords are reused</p>`     : ''}
+                ${health.old    > 0 ? `<p style="color: #17a2b8; margin: 5px 0;">🔵 ${health.old} passwords are 6+ months old</p>` : ''}
+                ${health.weak === 0 && health.reused === 0 && health.old === 0
+                  ? `<p style="color: #28a745;">✅ Excellent vault health!</p>` : ''}
               </div>
             </div>
             <button class="btn" onclick="closeHealthDashboard()" style="width: 100%;">Close</button>
           </div>
-        </div>
-      `;
+        </div>`;
       document.body.insertAdjacentHTML('beforeend', dashboardHTML);
     };
     
     window.closeHealthDashboard = function() {
       const modal = document.getElementById('healthModal');
-      if (modal) {
-        modal.remove();
-      }
+      if (modal) modal.remove();
     };
     
     // Event listeners
@@ -1183,14 +1159,12 @@
       });
     });
     
-    // Initialize
     const theme = localStorage.getItem('theme');
     if (theme === 'light') {
       document.documentElement.setAttribute('data-theme', 'light');
       document.getElementById('themeIcon').textContent = '☀️';
     }
     
-    // Set year
     document.getElementById('vaultYear').textContent = new Date().getFullYear();
     
     initVault();
