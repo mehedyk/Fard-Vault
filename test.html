@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- SECURITY FIX: Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://api.pwnedpasswords.com; img-src 'self' data:;">
   <title>Supabase Connection Test</title>
   <style>
     body {
@@ -69,7 +71,6 @@
       log('Testing Supabase connection...', 'info');
       
       try {
-        // Check if env vars are set
         if (!SUPABASE_URL || !SUPABASE_KEY) {
           log('❌ ERROR: Environment variables not set!<br>VITE_SUPABASE_URL: ' + (SUPABASE_URL || 'MISSING') + '<br>VITE_SUPABASE_ANON_KEY: ' + (SUPABASE_KEY ? 'Set ✅' : 'MISSING'), 'error');
           return;
@@ -79,10 +80,8 @@
         log('URL: ' + SUPABASE_URL, 'info');
         log('Key: ' + SUPABASE_KEY.substring(0, 20) + '...', 'info');
         
-        // Initialize Supabase
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
-        // Test connection
         const { data, error } = await supabase.from('user_keys').select('count');
         
         if (error) {
@@ -128,7 +127,8 @@
         return;
       }
       
-      const tables = ['user_keys', 'vault_entries', 'categories', 'rate_limits'];
+      // UPDATED: includes rate_limiting functions table check
+      const tables = ['user_keys', 'vault_entries', 'categories', 'rate_limits', 'audit_log'];
       
       for (const table of tables) {
         try {
@@ -136,7 +136,6 @@
           
           if (error) {
             log(`❌ Table "${table}" ERROR: ${error.message}`, 'error');
-            
             if (error.message.includes('does not exist')) {
               log('⚠️ SOLUTION: Run migration 001_initial_schema.sql in Supabase SQL Editor', 'error');
             }
@@ -146,6 +145,21 @@
         } catch (err) {
           log(`❌ Table "${table}" EXCEPTION: ${err.message}`, 'error');
         }
+      }
+
+      // Test server-side rate limiting RPC functions exist
+      log('Testing server-side rate limiting RPC functions...', 'info');
+      try {
+        const { error } = await supabase.rpc('record_failed_login', { p_identifier: 'test@test.com' });
+        if (error && error.message.includes('does not exist')) {
+          log('❌ RPC "record_failed_login" not found — run migration 003_server_rate_limiting.sql', 'error');
+        } else {
+          log('✅ RPC "record_failed_login" exists', 'success');
+          // Clean up test call
+          await supabase.rpc('reset_failed_logins', { p_identifier: 'test@test.com' });
+        }
+      } catch (err) {
+        log('⚠️ Could not verify RPC functions: ' + err.message, 'error');
       }
     }
     
@@ -163,7 +177,6 @@
       log('Creating test account: ' + testEmail, 'info');
       
       try {
-        // Step 1: Sign up
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: testEmail,
           password: testPassword
@@ -172,7 +185,6 @@
         if (authError) {
           log('❌ Registration ERROR: ' + authError.message, 'error');
           log('<pre>' + JSON.stringify(authError, null, 2) + '</pre>', 'error');
-          
           if (authError.message.includes('User already registered')) {
             log('ℹ️ This is OK - it means auth is working!', 'info');
           }
@@ -182,20 +194,15 @@
         log('✅ User created in auth.users!', 'success');
         log('User ID: ' + authData.user.id, 'info');
         
-        // Step 2: Try to insert into user_keys
         const salt = 'test_salt_base64_encoded_string';
         
         const { data: keyData, error: keyError } = await supabase
           .from('user_keys')
-          .insert({
-            user_id: authData.user.id,
-            salt: salt
-          });
+          .insert({ user_id: authData.user.id, salt: salt });
         
         if (keyError) {
           log('❌ user_keys INSERT ERROR: ' + keyError.message, 'error');
           log('<pre>' + JSON.stringify(keyError, null, 2) + '</pre>', 'error');
-          
           if (keyError.message.includes('violates row-level security')) {
             log('⚠️ SOLUTION: RLS policy issue. Run migration 002_rls_policies.sql', 'error');
           }
@@ -204,7 +211,6 @@
           log('✅ REGISTRATION WORKS! Your setup is correct.', 'success');
         }
         
-        // Cleanup
         await supabase.auth.signOut();
         
       } catch (err) {
@@ -212,6 +218,11 @@
         console.error(err);
       }
     }
+
+    window.testConnection = testConnection;
+    window.testAuth = testAuth;
+    window.testTables = testTables;
+    window.testRegistration = testRegistration;
   </script>
 </body>
 </html>
