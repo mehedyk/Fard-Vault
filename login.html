@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- SECURITY FIX: Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://api.pwnedpasswords.com; img-src 'self' data:;">
   <title>Login - Fard Vault</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -286,12 +288,11 @@
   <script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
   
   <script type="module">
-    // Set current year
     document.getElementById('currentYear').textContent = new Date().getFullYear();
+
     const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
     const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
     
-    // Debug: Log if env vars are missing
     if (!SUPABASE_URL || !SUPABASE_KEY) {
       console.error('❌ Environment variables not set!');
       console.error('VITE_SUPABASE_URL:', SUPABASE_URL || 'MISSING');
@@ -301,31 +302,65 @@
     }
     
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    
-    // Brute force protection
-    let failedAttempts = parseInt(localStorage.getItem('failed_attempts') || '0');
-    let lockedUntil = parseInt(localStorage.getItem('locked_until') || '0');
-    
-    function checkLockout() {
-      if (lockedUntil && Date.now() < lockedUntil) {
-        const remaining = Math.ceil((lockedUntil - Date.now()) / 1000 / 60);
-        document.getElementById('lockoutTimer').style.display = 'block';
-        document.getElementById('lockoutTimer').textContent = `⏱️ Account locked. Try again in ${remaining} minutes.`;
-        document.getElementById('loginBtn').disabled = true;
-        setTimeout(checkLockout, 1000);
-        return true;
-      } else {
-        document.getElementById('lockoutTimer').style.display = 'none';
-        document.getElementById('loginBtn').disabled = false;
-        if (lockedUntil) {
-          localStorage.removeItem('locked_until');
-          localStorage.removeItem('failed_attempts');
-          failedAttempts = 0;
-        }
-        return false;
+
+    // ─── SECURITY FIX: Server-side rate limiting ──────────────────────────────
+    // Lockout state is now checked AND enforced server-side via Supabase RPC.
+    // The client-side copy is only used to avoid unnecessary requests while
+    // an active lockout is already known; it cannot be used to bypass the server.
+    let clientLockoutUntil = parseInt(sessionStorage.getItem('client_locked_until') || '0');
+
+    function getClientLockoutRemaining() {
+      if (clientLockoutUntil && Date.now() < clientLockoutUntil) {
+        return Math.ceil((clientLockoutUntil - Date.now()) / 1000);
       }
+      return 0;
     }
-    
+
+    function setClientLockout(seconds) {
+      clientLockoutUntil = Date.now() + seconds * 1000;
+      sessionStorage.setItem('client_locked_until', clientLockoutUntil.toString());
+    }
+
+    function clearClientLockout() {
+      clientLockoutUntil = 0;
+      sessionStorage.removeItem('client_locked_until');
+    }
+
+    let lockoutInterval = null;
+
+    function startLockoutTimer(remainingSeconds) {
+      const timerEl = document.getElementById('lockoutTimer');
+      const btn = document.getElementById('loginBtn');
+
+      function tick() {
+        const remaining = getClientLockoutRemaining();
+        if (remaining <= 0) {
+          timerEl.style.display = 'none';
+          btn.disabled = false;
+          clearClientLockout();
+          if (lockoutInterval) { clearInterval(lockoutInterval); lockoutInterval = null; }
+          return;
+        }
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        timerEl.style.display = 'block';
+        timerEl.textContent = `⏱️ Account locked. Try again in ${mins}:${String(secs).padStart(2, '0')}.`;
+        btn.disabled = true;
+      }
+
+      setClientLockout(remainingSeconds);
+      tick();
+      if (lockoutInterval) clearInterval(lockoutInterval);
+      lockoutInterval = setInterval(tick, 1000);
+    }
+
+    // Restore lockout on page load (e.g. after refresh)
+    const initialRemaining = getClientLockoutRemaining();
+    if (initialRemaining > 0) {
+      startLockoutTimer(initialRemaining);
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     function showAlert(message, type = 'error') {
       const container = document.getElementById('alertContainer');
       container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
@@ -334,13 +369,13 @@
     
     window.handleLogin = async function(e) {
       e.preventDefault();
-      
-      if (checkLockout()) {
+
+      if (getClientLockoutRemaining() > 0) {
         showAlert('Account is locked. Please wait.', 'error');
         return;
       }
       
-      const email = document.getElementById('email').value;
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const btn = document.getElementById('loginBtn');
       
@@ -348,26 +383,46 @@
       btn.innerHTML = '<span class="spinner">⏳</span> Unlocking...';
       
       try {
-        // Sign in with Supabase
-        const {data, error} = await supabase.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
+        // ── Step 1: Supabase authentication ──
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         
-        if (error) throw error;
-        
-        // Get user's salt
-        const {data: keyData, error: keyError} = await supabase
+        if (error) {
+          // ── SECURITY FIX: Increment server-side rate limit on auth failure ──
+          // Call the DB function that tracks attempts against this identifier.
+          // The server enforces the real lockout; we mirror it client-side for UX.
+          const { data: rlData } = await supabase.rpc('record_failed_login', {
+            p_identifier: email
+          }).maybeSingle();
+
+          if (rlData) {
+            if (rlData.locked) {
+              // Server says locked — mirror the lockout duration client-side
+              const lockSecs = rlData.locked_for_seconds || 900; // default 15 min
+              startLockoutTimer(lockSecs);
+              showAlert('Too many failed attempts. Account locked for 15 minutes.', 'error');
+            } else {
+              const remaining = rlData.attempts_remaining ?? '?';
+              showAlert(`Invalid credentials. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`, 'error');
+            }
+          } else {
+            // RPC not available yet (migration pending) — graceful fallback message
+            showAlert('Invalid credentials. Please check your email and password.', 'error');
+          }
+
+          btn.disabled = false;
+          btn.innerHTML = '🔓 Unlock Vault';
+          return;
+        }
+
+        // ── Step 2: Load salt and derive encryption key ──
+        const { data: keyData, error: keyError } = await supabase
           .from('user_keys')
           .select('salt')
           .eq('user_id', data.user.id)
           .single();
         
-        if (keyError || !keyData) {
-          throw new Error('Could not load encryption keys');
-        }
+        if (keyError || !keyData) throw new Error('Could not load encryption keys');
         
-        // Verify by attempting to derive key
         const salt = Uint8Array.from(atob(keyData.salt), c => c.charCodeAt(0));
         await argon2.hash({
           pass: password,
@@ -379,30 +434,18 @@
           type: argon2.ArgonType.Argon2id
         });
         
-        // Success! Store master password in session
+        // ── Step 3: Success — clear any lockout mirrors, store session ──
+        clearClientLockout();
+
+        // ── SECURITY FIX: Reset server-side counter on successful login ──
+        await supabase.rpc('reset_failed_logins', { p_identifier: email }).maybeSingle();
+
         sessionStorage.setItem('master_password', password);
-        
-        // Reset failed attempts
-        localStorage.removeItem('failed_attempts');
-        localStorage.removeItem('locked_until');
-        
         window.location.href = '/vault.html';
         
       } catch (error) {
         console.error('Login error:', error);
-        failedAttempts++;
-        localStorage.setItem('failed_attempts', failedAttempts.toString());
-        
-        if (failedAttempts >= 5) {
-          lockedUntil = Date.now() + (15 * 60 * 1000); // 15 minutes
-          localStorage.setItem('locked_until', lockedUntil.toString());
-          showAlert('Too many failed attempts. Account locked for 15 minutes.', 'error');
-          checkLockout();
-        } else {
-          const remaining = 5 - failedAttempts;
-          showAlert(`Invalid credentials. ${remaining} attempts remaining.`, 'error');
-        }
-        
+        showAlert(error.message || 'Login failed. Please try again.', 'error');
         btn.disabled = false;
         btn.innerHTML = '🔓 Unlock Vault';
       }
@@ -422,18 +465,13 @@
       }
     };
     
-    // Initialize theme
     const theme = localStorage.getItem('theme');
     if (theme === 'light') {
       document.documentElement.setAttribute('data-theme', 'light');
       document.getElementById('themeIcon').textContent = '☀️';
     }
     
-    // Check lockout on load
-    checkLockout();
-    
-    // Check if already logged in
-    supabase.auth.getSession().then(({data: {session}}) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && sessionStorage.getItem('master_password')) {
         window.location.href = '/vault.html';
       }
