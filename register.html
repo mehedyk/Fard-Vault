@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- SECURITY FIX: Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://api.pwnedpasswords.com; img-src 'self' data:;">
   <title>Create Account - Fard Vault</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -19,6 +21,8 @@
       --accent-dark: #14532d;
       --input-bg: #111;
       --input-border: #333;
+      --danger-red: #ff4444;
+      --warning-yellow: #ffc107;
       --info-text: #888;
       --theme-btn-bg: rgba(255, 255, 255, 0.1);
       --theme-btn-hover: rgba(255, 255, 255, 0.2);
@@ -243,17 +247,19 @@
     
     .warning-box {
       background: rgba(255, 193, 7, 0.1);
-      border: 2px solid var(--warning-yellow);
+      border: 1px solid var(--warning-yellow);
       padding: 15px;
       border-radius: 8px;
-      margin: 20px 0;
-      font-size: 0.9em;
+      margin: 15px 0;
+      font-size: 0.85em;
+      line-height: 1.5;
+      color: var(--warning-yellow);
     }
-    
+
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-    
+
     .spinner {
       display: inline-block;
       animation: spin 1s linear infinite;
@@ -281,7 +287,8 @@
       
       <div class="form-group">
         <label for="password">Master Password</label>
-        <input type="password" id="password" required autocomplete="new-password" minlength="12" placeholder="Create a strong master password" oninput="checkPasswordStrength()"/>
+        <input type="password" id="password" required autocomplete="new-password" minlength="12"
+               placeholder="Create a strong master password" oninput="checkPasswordStrength()"/>
         <div class="strength-bar">
           <div class="strength-fill" id="strengthBar"></div>
         </div>
@@ -289,7 +296,6 @@
       </div>
       
       <div class="requirements">
-        <strong>Password Requirements:</strong>
         <div class="requirement" id="req-length">❌ At least 12 characters</div>
         <div class="requirement" id="req-upper">❌ One uppercase letter</div>
         <div class="requirement" id="req-lower">❌ One lowercase letter</div>
@@ -299,7 +305,8 @@
       
       <div class="form-group">
         <label for="confirmPassword">Confirm Master Password</label>
-        <input type="password" id="confirmPassword" required autocomplete="new-password" minlength="12" placeholder="Re-enter your master password" oninput="checkPasswordMatch()"/>
+        <input type="password" id="confirmPassword" required autocomplete="new-password" minlength="12"
+               placeholder="Re-enter your master password" oninput="checkPasswordMatch()"/>
         <div class="strength-text" id="matchText"></div>
       </div>
       
@@ -330,13 +337,11 @@
   <script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
   
   <script type="module">
-    // Set current year
     document.getElementById('currentYear').textContent = new Date().getFullYear();
-    // Get environment variables with fallbacks for debugging
+
     const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
     const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
     
-    // Debug: Log if env vars are missing
     if (!SUPABASE_URL || !SUPABASE_KEY) {
       console.error('❌ Environment variables not set!');
       console.error('VITE_SUPABASE_URL:', SUPABASE_URL || 'MISSING');
@@ -373,20 +378,16 @@
       
       document.getElementById('req-length').className = requirements.length ? 'requirement met' : 'requirement';
       document.getElementById('req-length').textContent = (requirements.length ? '✅' : '❌') + ' At least 12 characters';
-      
       document.getElementById('req-upper').className = requirements.upper ? 'requirement met' : 'requirement';
       document.getElementById('req-upper').textContent = (requirements.upper ? '✅' : '❌') + ' One uppercase letter';
-      
       document.getElementById('req-lower').className = requirements.lower ? 'requirement met' : 'requirement';
       document.getElementById('req-lower').textContent = (requirements.lower ? '✅' : '❌') + ' One lowercase letter';
-      
       document.getElementById('req-number').className = requirements.number ? 'requirement met' : 'requirement';
       document.getElementById('req-number').textContent = (requirements.number ? '✅' : '❌') + ' One number';
-      
       document.getElementById('req-special').className = requirements.special ? 'requirement met' : 'requirement';
       document.getElementById('req-special').textContent = (requirements.special ? '✅' : '❌') + ' One special character';
       
-      let score = Object.values(requirements).filter(Boolean).length - 1; // Exclude match
+      let score = Object.values(requirements).filter(Boolean).length - 1; // exclude match
       
       if (score <= 1) {
         bar.className = 'strength-fill strength-weak';
@@ -429,14 +430,13 @@
     
     function updateSubmitButton() {
       const btn = document.getElementById('registerBtn');
-      const allMet = Object.values(requirements).every(Boolean);
-      btn.disabled = !allMet;
+      btn.disabled = !Object.values(requirements).every(Boolean);
     }
     
     window.handleRegister = async function(e) {
       e.preventDefault();
       
-      const email = document.getElementById('email').value;
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const btn = document.getElementById('registerBtn');
       
@@ -444,19 +444,12 @@
       btn.innerHTML = '<span class="spinner">⏳</span> Creating vault...';
       
       try {
-        // 1. Sign up with Supabase
-        const {data: authData, error: authError} = await supabase.auth.signUp({
-          email: email,
-          password: password
-        });
-        
+        const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
         if (authError) throw authError;
         
-        // 2. Generate salt for key derivation
         const salt = crypto.getRandomValues(new Uint8Array(16));
         const saltBase64 = btoa(String.fromCharCode(...salt));
         
-        // 3. Derive encryption key (verify Argon2id works)
         await argon2.hash({
           pass: password,
           salt: salt,
@@ -467,37 +460,30 @@
           type: argon2.ArgonType.Argon2id
         });
         
-        // 4. Store salt in database
-        const {error: keyError} = await supabase.from('user_keys').insert({
+        const { error: keyError } = await supabase.from('user_keys').insert({
           user_id: authData.user.id,
           salt: saltBase64
         });
-        
         if (keyError) throw keyError;
         
-        // 5. Create default categories (in case trigger didn't work)
         const defaultCategories = [
           { user_id: authData.user.id, name: 'Social Media', icon: '🌐', color: '#1DA1F2' },
-          { user_id: authData.user.id, name: 'Banking', icon: '💳', color: '#00C853' },
-          { user_id: authData.user.id, name: 'Email', icon: '📧', color: '#EA4335' },
-          { user_id: authData.user.id, name: 'Work', icon: '💼', color: '#0078D4' },
-          { user_id: authData.user.id, name: 'Gaming', icon: '🎮', color: '#9146FF' },
-          { user_id: authData.user.id, name: 'Shopping', icon: '🛒', color: '#FF9800' },
-          { user_id: authData.user.id, name: 'Other', icon: '📁', color: '#39ff14' }
+          { user_id: authData.user.id, name: 'Banking',      icon: '💳', color: '#00C853' },
+          { user_id: authData.user.id, name: 'Email',        icon: '📧', color: '#EA4335' },
+          { user_id: authData.user.id, name: 'Work',         icon: '💼', color: '#0078D4' },
+          { user_id: authData.user.id, name: 'Gaming',       icon: '🎮', color: '#9146FF' },
+          { user_id: authData.user.id, name: 'Shopping',     icon: '🛒', color: '#FF9800' },
+          { user_id: authData.user.id, name: 'Other',        icon: '📁', color: '#39ff14' }
         ];
         
-        // Try to insert categories (ignore if trigger already created them)
         await supabase.from('categories').insert(defaultCategories).catch(() => {
           console.log('Categories already exist or trigger created them');
         });
         
-        // 6. Store master password in session
         sessionStorage.setItem('master_password', password);
         
         showAlert('Account created successfully! Redirecting...', 'success');
-        setTimeout(() => {
-          window.location.href = '/vault.html';
-        }, 1500);
+        setTimeout(() => { window.location.href = '/vault.html'; }, 1500);
         
       } catch (error) {
         console.error('Registration error:', error);
@@ -521,15 +507,13 @@
       }
     };
     
-    // Initialize theme
     const theme = localStorage.getItem('theme');
     if (theme === 'light') {
       document.documentElement.setAttribute('data-theme', 'light');
       document.getElementById('themeIcon').textContent = '☀️';
     }
     
-    // Check if already logged in
-    supabase.auth.getSession().then(({data: {session}}) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && sessionStorage.getItem('master_password')) {
         window.location.href = '/vault.html';
       }
