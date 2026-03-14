@@ -1,9 +1,9 @@
-# 🚀 Fard Vault Deployment Guide
+# 🚀 Fard Vault — Deployment Guide
 
-Complete step-by-step guide to deploy your vault from zero to production.
+Complete step-by-step guide from zero to a live, security-hardened vault.
 
-**Time required:** 15-20 minutes  
-**Cost:** $0 (using free tiers)
+**Time required:** 20–30 minutes  
+**Cost:** $0 (all free tiers)
 
 ---
 
@@ -11,456 +11,366 @@ Complete step-by-step guide to deploy your vault from zero to production.
 
 Before starting, make sure you have:
 
-- [ ] GitHub account (free)
-- [ ] Supabase account (free tier - [signup](https://supabase.com))
-- [ ] Vercel account (free tier - [signup](https://vercel.com))
-- [ ] All project files ready
+- [ ] GitHub account — [signup](https://github.com/signup)
+- [ ] Supabase account — [signup](https://supabase.com)
+- [ ] Vercel account — [signup](https://vercel.com)
+- [ ] All project files ready (this folder)
 
 ---
 
-## 📋 Part 1: Create GitHub Repository
+## Part 1 — GitHub Repository
 
-### Step 1.1: Create Repository on GitHub
+### 1.1 Create the Repository
 
-1. Go to [https://github.com/new](https://github.com/new)
+1. Go to [github.com/new](https://github.com/new)
 2. Fill in:
    - **Repository name:** `fard-vault`
-   - **Description:** "Zero-knowledge password manager with client-side encryption"
    - **Visibility:** Public or Private (your choice)
-   - **Initialize:** ❌ Do NOT check "Add a README"
+   - ❌ Do **not** check "Add a README" — you already have one
 3. Click **"Create repository"**
 
-### Step 1.2: Push Code to GitHub
-
-Open terminal and run:
+### 1.2 Push the Code
 
 ```bash
-# Navigate to your project folder
 cd /path/to/fard-vault
 
-# Initialize git (if not already done)
 git init
-
-# Add all files
 git add .
+git commit -m "feat: Fard Vault v1.0 — security hardened"
 
-# Commit
-git commit -m "Initial commit: Fard Vault v1.0"
-
-# Add remote (replace YOUR_USERNAME)
 git remote add origin https://github.com/YOUR_USERNAME/fard-vault.git
-
-# Push to GitHub
 git branch -M main
 git push -u origin main
 ```
 
-✅ **Verify:** Go to your GitHub repository - you should see all files
+✅ Verify: your GitHub repo should now show all files including `supabase/migrations/`.
 
 ---
 
-## 📋 Part 2: Setup Supabase Backend
+## Part 2 — Supabase Backend
 
-### Step 2.1: Create Supabase Project
+### 2.1 Create Project
 
-1. Go to [https://app.supabase.com](https://app.supabase.com)
-2. Click **"New Project"**
-3. Fill in:
-   - **Organization:** Select or create one
+1. Go to [app.supabase.com](https://app.supabase.com) → **"New Project"**
+2. Fill in:
    - **Name:** `fard-vault`
-   - **Database Password:** Click "Generate" and **SAVE THIS PASSWORD**
-   - **Region:** Choose closest to your users (e.g., `us-east-1`, `eu-west-1`)
-   - **Pricing Plan:** Free (up to 500MB database)
-4. Click **"Create new project"**
-5. ⏳ Wait ~2 minutes for setup
+   - **Database Password:** Click "Generate" and **save this password securely**
+   - **Region:** Choose the one closest to your users
+   - **Plan:** Free
+3. Click **"Create new project"**
+4. Wait ~2 minutes for provisioning
 
-✅ **Verify:** Dashboard should show "Project is live"
+✅ Verify: dashboard shows "Project is live"
 
-### Step 2.2: Run Database Migrations
+### 2.2 Run Database Migrations
 
-1. In Supabase Dashboard, click **"SQL Editor"** (left sidebar)
-2. Click **"New query"**
+Run all **three** migrations in order. For each one:
 
-**First Migration:**
-3. Open `supabase/migrations/001_initial_schema.sql` from your project
-4. **Copy entire content** (Ctrl+A, Ctrl+C)
-5. **Paste** into SQL Editor
-6. Click **"Run"** (or press F5)
-7. ✅ Should see: "Success. No rows returned"
+1. In Supabase Dashboard → **"SQL Editor"** → **"New query"**
+2. Open the migration file, copy the entire content, paste it in, click **"Run"**
+3. Confirm you see `Success. No rows returned.`
 
-**Second Migration:**
-8. Click **"New query"** again
-9. Open `supabase/migrations/002_rls_policies.sql`
-10. **Copy entire content**
-11. **Paste** into SQL Editor
-12. Click **"Run"**
-13. ✅ Should see: "Success. No rows returned"
+**Migration order:**
 
-### Step 2.3: Verify Tables Created
+| # | File | What it creates |
+|---|------|----------------|
+| 1 | `supabase/migrations/001_initial_schema.sql` | Tables: `user_keys`, `vault_entries`, `categories`, `rate_limits`, `audit_log`; indexes; update triggers; default category trigger |
+| 2 | `supabase/migrations/002_rls_policies.sql` | Row Level Security policies on all tables (per-user data isolation) |
+| 3 | `supabase/migrations/003_server_rate_limiting.sql` | RPC functions `record_failed_login` and `reset_failed_logins` (server-side brute-force protection) |
 
-1. Click **"Table Editor"** (left sidebar)
-2. ✅ You should see these tables:
-   - `user_keys`
-   - `vault_entries`
-   - `categories`
-   - `rate_limits`
-   - `audit_log`
+> ⚠️ **Migration 003 is required.** Without it, login rate limiting will silently fall back to a graceful error message — the vault still works, but lockouts won't be enforced server-side.
 
-If tables are missing, re-run the migrations.
+### 2.3 Verify Tables and Functions
 
-### Step 2.4: Get API Keys
+**Tables** — go to **"Table Editor"** and confirm you see:
+- `user_keys`
+- `vault_entries`
+- `categories`
+- `rate_limits`
+- `audit_log`
 
-1. Click **"Settings"** (left sidebar)
-2. Click **"API"**
-3. **Copy and save:**
-   - **Project URL:** `https://xxxxx.supabase.co`
-   - **anon public key:** Long string starting with `eyJ...`
+**RPC Functions** — go to **"Database" → "Functions"** and confirm:
+- `record_failed_login`
+- `reset_failed_logins`
+- `check_rate_limit` (from migration 001)
+- `create_default_categories` (from migration 001)
 
-⚠️ **IMPORTANT:** Save these in a secure note - you'll need them for Vercel!
+If any are missing, re-run the corresponding migration.
 
-### Step 2.5: Configure Authentication
+### 2.4 Get Your API Keys
 
-1. Click **"Authentication"** (left sidebar)
-2. Click **"Providers"**
-3. Find **"Email"** provider
-4. ✅ Ensure it's **enabled**
-5. Click **"Settings"** → **"Auth"**
-6. Configure:
-   - **Enable email confirmations:** ❌ Disabled (for faster MVP)
+1. **"Settings"** → **"API"**
+2. Copy and save both:
+   - **Project URL** — `https://xxxxxxxxxxxx.supabase.co`
+   - **anon / public key** — long string starting with `eyJ...`
+
+⚠️ Keep the anon key safe — it's public but rate-limited. Never expose the `service_role` key.
+
+### 2.5 Configure Auth Settings
+
+1. **"Authentication"** → **"Providers"** → confirm **Email** is enabled
+2. **"Authentication"** → **"Settings"**:
+   - **Enable email confirmations:** your choice (disable for faster MVP)
    - **Secure password change:** ✅ Enabled
    - **Minimum password length:** `12`
-7. Click **"Save"**
+3. Click **"Save"**
 
-✅ **Supabase setup complete!**
-
----
-
-## 📋 Part 3: Deploy to Vercel
-
-### Step 3.1: Connect GitHub Repository
-
-1. Go to [https://vercel.com/new](https://vercel.com/new)
-2. Click **"Import Git Repository"**
-3. Find and select your `fard-vault` repository
-4. Click **"Import"**
-
-### Step 3.2: Configure Project
-
-1. **Project Name:** `fard-vault` (or customize)
-2. **Framework Preset:** Select **"Vite"**
-3. **Root Directory:** Leave as `./` (default)
-4. **Build Command:** `npm run build`
-5. **Output Directory:** `dist`
-6. **Install Command:** `npm install`
-
-### Step 3.3: Add Environment Variables
-
-This is **CRITICAL** - your app won't work without these!
-
-1. Scroll down to **"Environment Variables"**
-2. Click **"Add Environment Variable"**
-
-**Variable 1:**
-- **Key:** `VITE_SUPABASE_URL`
-- **Value:** Paste your Supabase Project URL (from Step 2.4)
-- Click **"Add"**
-
-**Variable 2:**
-- **Key:** `VITE_SUPABASE_ANON_KEY`
-- **Value:** Paste your Supabase anon public key (from Step 2.4)
-- Click **"Add"**
-
-✅ **Verify:** You should see 2 environment variables listed
-
-### Step 3.4: Deploy!
-
-1. Click **"Deploy"** button
-2. ⏳ Wait ~2-3 minutes
-3. Watch the build logs (exciting! 🚀)
-4. ✅ Should see: "Deployment Ready"
-
-### Step 3.5: Get Your Live URL
-
-1. After deployment, you'll see a preview image
-2. Your vault is live at: `https://fard-vault-xxxxx.vercel.app`
-3. Click **"Visit"** to open
-
-🎉 **CONGRATULATIONS! Your vault is LIVE!**
+✅ Supabase setup complete.
 
 ---
 
-## 📋 Part 4: Test Your Deployment
+## Part 3 — Deploy to Vercel
 
-### Test 4.1: Create First Account
+### 3.1 Import the Repository
 
-1. Visit your Vercel URL
-2. Click **"Create Account"**
-3. Enter:
-   - **Email:** your-email@example.com
-   - **Master Password:** Choose strong password (12+ chars)
-   - ✅ All requirements should turn green
-4. Click **"Create Vault"**
-5. ✅ Should redirect to vault page
+1. Go to [vercel.com/new](https://vercel.com/new)
+2. Click **"Import Git Repository"** and select `fard-vault`
+3. Click **"Import"**
 
-### Test 4.2: Add First Password
+### 3.2 Configure Build Settings
 
-1. Click **"➕ New Password"**
-2. Fill in:
-   - **Title:** "Test Entry"
-   - **Username:** "test@example.com"
-   - **Password:** "TestPassword123!"
-   - **Category:** Social Media
-3. Click **"💾 Save"**
-4. ✅ Should see entry in vault
+| Setting | Value |
+|---------|-------|
+| Framework Preset | **Vite** |
+| Root Directory | `./` |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Install Command | `npm install` |
 
-### Test 4.3: Lock & Unlock
+### 3.3 Add Environment Variables
 
-1. Click **"🔒 Lock Vault"** (sidebar)
-2. ✅ Should redirect to login
-3. Enter your master password
-4. Click **"🔓 Unlock Vault"**
-5. ✅ Should see your test entry
+> **This step is critical — the app will not work without these.**
 
-### Test 4.4: Theme Toggle
+Scroll to **"Environment Variables"** and add:
 
-1. Click **🌙** (theme toggle)
-2. ✅ Should switch to light mode
-3. Click **☀️**
-4. ✅ Should switch back to dark mode
+| Key | Value |
+|-----|-------|
+| `VITE_SUPABASE_URL` | Your Supabase Project URL from Step 2.4 |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key from Step 2.4 |
 
-✅ **All tests passed? You're good to go!**
+### 3.4 Deploy
+
+Click **"Deploy"** and wait ~2–3 minutes.
+
+✅ You should see: **"Deployment Ready"**  
+🎉 Your vault is live at: `https://fard-vault-xxxx.vercel.app`
 
 ---
 
-## 📋 Part 5: Custom Domain (Optional)
+## Part 4 — Verify the Deployment
 
-### Step 5.1: Add Custom Domain
+### 4.1 Run the Connection Test
 
-1. In Vercel dashboard, click your project
-2. Click **"Settings"** → **"Domains"**
-3. Enter your domain: `vault.yourdomain.com`
-4. Click **"Add"**
+Visit `https://your-url.vercel.app/test.html` and run each button in order:
 
-### Step 5.2: Configure DNS
+1. **Test Connection** — should confirm Supabase is reachable
+2. **Test Auth** — should confirm auth is configured
+3. **Test Tables** — should confirm all 5 tables exist and the rate-limiting RPC functions are present
+4. **Test Registration** — should confirm insert permissions work
 
-Vercel will show you DNS records to add:
+> 🗑️ `test.html` is a development diagnostic tool. You may remove it from production by deleting it from `vite.config.js` inputs before your final deployment.
 
-**Option A: CNAME (recommended)**
+### 4.2 Create Your First Account
+
+1. Visit your vault URL → click **"Create Account"**
+2. Enter email + strong master password (all 5 requirement indicators must go green)
+3. Click **"Create Vault"** → should redirect to vault
+
+### 4.3 Smoke Tests
+
+| Test | Expected |
+|------|---------|
+| Add a password entry | Entry appears in grid with fadeIn animation |
+| Toggle password visibility | Password reveals/hides with blur effect |
+| Copy to clipboard | "Copied!" notification; clipboard auto-clears in 30 s |
+| Paste a `javascript:` URL | Saved but rendered as plain text, not a link |
+| Lock vault | Redirects to login, sessionStorage cleared |
+| Enter wrong password 5× | Login locked for 15 minutes (server-side) |
+| Clear localStorage / browser data | Lockout still enforced (server holds it) |
+| Toggle theme | Switches dark ↔ light, persists on refresh |
+| Export (encrypted) | Downloads `.json` file |
+| Import the same file | Entries added to vault |
+| Breach check | HIBP result shown via notification |
+| Health Dashboard | Shows totals, strong/weak/reused counts |
+
+✅ All passing? You're live.
+
+---
+
+## Part 5 — GitHub Actions CI/CD (Automated Deploys)
+
+Every push to `main` will automatically deploy via `.github/workflows/deploy.yml`.
+
+### 5.1 Get Vercel Tokens
+
+1. In Vercel → **"Settings"** → **"Tokens"** → **"Create Token"** → name it `github-actions`
+2. Copy the token
+3. In Vercel → your project → **"Settings"** → **"General"** → copy **Project ID**
+4. In Vercel → **"Settings"** → **"General"** → copy **Team ID** (Org ID)
+
+### 5.2 Add Secrets to GitHub
+
+In your GitHub repo → **"Settings"** → **"Secrets and variables"** → **"Actions"** → **"New repository secret"**:
+
+| Secret name | Value |
+|-------------|-------|
+| `VERCEL_TOKEN` | Token from step 5.1 |
+| `VERCEL_PROJECT_ID` | Project ID from step 5.1 |
+| `VERCEL_ORG_ID` | Team/Org ID from step 5.1 |
+| `VITE_SUPABASE_URL` | Your Supabase URL |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key |
+
+### 5.3 Verify
+
+Push any change to `main`:
+
+```bash
+git add .
+git commit -m "test: trigger CI"
+git push origin main
 ```
-Type: CNAME
-Name: vault
+
+Go to GitHub → **"Actions"** tab — you should see a green workflow run.
+
+---
+
+## Part 6 — Custom Domain (Optional)
+
+### 6.1 Add Domain in Vercel
+
+1. Vercel project → **"Settings"** → **"Domains"** → enter `vault.yourdomain.com` → **"Add"**
+
+### 6.2 Configure DNS
+
+Vercel will show you the required records. The most common setup:
+
+```
+Type:  CNAME
+Name:  vault
 Value: cname.vercel-dns.com
 ```
 
-**Option B: A Record**
+Or for an apex domain:
+
 ```
-Type: A
-Name: vault
+Type:  A
+Name:  @
 Value: 76.76.21.21
 ```
 
-### Step 5.3: Wait for DNS Propagation
+### 6.3 Wait for Propagation
 
-- Usually takes 5-30 minutes
-- Check status in Vercel dashboard
-- ✅ Should show: "Valid Configuration"
-
-🎉 **Your vault is now at:** `https://vault.yourdomain.com`
+Usually 5–30 minutes. Vercel dashboard will show ✅ **"Valid Configuration"** when done. HTTPS is issued automatically.
 
 ---
 
-## 📋 Part 6: Link to Fard Generator (Optional)
+## Part 7 — Post-Deployment Security Checklist
 
-If you want to link your password generator:
+Run through this after every fresh deployment:
 
-### Step 6.1: Update Fard Generator
-
-In your Fard generator HTML, add a link:
-
-```html
-<a href="https://your-vault-url.vercel.app" 
-   target="_blank" 
-   class="btn" 
-   style="margin-top: 20px;">
-  🔐 Save to Fard Vault
-</a>
-```
-
-### Step 6.2: Update Vault to Link Back
-
-In `vault.html`, add a link to generator:
-
-```html
-<a href="https://your-fard-generator-url.vercel.app" 
-   target="_blank" 
-   class="btn">
-  🎲 Generate Password
-</a>
-```
+- [ ] HTTPS padlock visible in browser address bar
+- [ ] `Strict-Transport-Security` header present (check DevTools → Network → response headers)
+- [ ] `Content-Security-Policy` header present and does **not** contain `unsafe-eval`
+- [ ] `X-Frame-Options: DENY` present
+- [ ] Environment variables set in Vercel (not hardcoded in source)
+- [ ] All 3 SQL migrations ran without errors
+- [ ] Rate limiting RPC functions visible in Supabase → Database → Functions
+- [ ] Lockout test: 5 wrong passwords → locked for 15 min → clearing localStorage does **not** bypass it
+- [ ] `javascript:alert(1)` as a URL → renders as plain text, not a live link
+- [ ] No sensitive data logged in browser console during normal use
+- [ ] `test.html` removed or restricted if this is a public-facing production vault
 
 ---
 
-## 🚨 Post-Deployment Security Checklist
+## Updating the Vault
 
-After deployment, verify security:
-
-- [ ] HTTPS is enabled (check for padlock 🔒 in browser)
-- [ ] Environment variables are set correctly
-- [ ] Master password works for encryption/decryption
-- [ ] Failed login attempts trigger lockout
-- [ ] Session auto-locks after inactivity
-- [ ] RLS policies are active (test with multiple accounts)
-- [ ] No sensitive data in browser console
-- [ ] CSP headers are active (check in DevTools → Network → Headers)
-
----
-
-## 📊 Monitoring Your Vault
-
-### Vercel Analytics (Free)
-
-1. In Vercel dashboard → **"Analytics"**
-2. Enable **"Web Analytics"**
-3. See:
-   - Page views
-   - Performance metrics
-   - Error rates
-
-### Supabase Monitoring
-
-1. In Supabase dashboard → **"Database"** → **"Logs"**
-2. Monitor:
-   - API requests
-   - Error logs
-   - Slow queries
-
----
-
-## 🔄 Updating Your Vault
-
-### Method 1: Git Push (Automatic)
+### Automatic (recommended)
 
 ```bash
-# Make changes to code
-nano vault.html  # or any file
-
-# Commit changes
+# Make your changes
 git add .
-git commit -m "Update: Added new feature"
-
-# Push to GitHub
+git commit -m "fix: description of change"
 git push origin main
-
-# Vercel automatically rebuilds and deploys! 🚀
+# Vercel auto-deploys in ~2 minutes
 ```
 
-### Method 2: Vercel Dashboard (Manual)
+### Manual Redeploy
 
-1. Go to Vercel dashboard
-2. Click **"Deployments"**
-3. Click **"Redeploy"** on latest deployment
+Vercel dashboard → **"Deployments"** → latest → **"Redeploy"**
 
 ---
 
-## 🐛 Common Issues & Fixes
+## Troubleshooting
 
-### Issue 1: "Cannot read encrypted data"
+### "Environment variables not set" on load
 
-**Cause:** Master password or salt mismatch
+- Confirm both `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are in Vercel project environment variables
+- Trigger a fresh deployment after adding them — existing builds do not pick up new env vars
 
-**Fix:**
-1. Ensure environment variables are correct
-2. Re-enter master password carefully
-3. Check Argon2id settings match
+### "Could not load encryption keys"
 
-### Issue 2: "Network error"
+- Run `test.html` → "Test Tables" — check that `user_keys` table exists
+- Confirm migration 001 ran without errors
 
-**Cause:** Supabase connection issue
+### "Rate limiting RPC not found"
 
-**Fix:**
-1. Check Supabase project is active
-2. Verify API keys in Vercel environment variables
-3. Check RLS policies are enabled
+- Migration 003 did not run. Open SQL Editor in Supabase, paste `003_server_rate_limiting.sql`, run it
+- The vault continues to work — you just lose server-side lockout enforcement until this is fixed
 
-### Issue 3: "Build failed on Vercel"
+### "violates row-level security policy"
 
-**Cause:** Missing dependencies or env vars
+- Migration 002 did not run, or ran with errors. Re-run `002_rls_policies.sql`
 
-**Fix:**
-1. Check `package.json` is correct
-2. Verify all environment variables are set
-3. Check build logs for specific error
+### Build fails on Vercel
 
-### Issue 4: "Rate limit exceeded"
+- Check build logs for the specific error
+- Most common cause: missing env vars. Add them in Vercel → Settings → Environment Variables
 
-**Cause:** Too many API calls
+### Tables missing after running migrations
 
-**Fix:**
-1. Check for infinite loops in code
-2. Verify rate limiting is working
-3. Contact Supabase support if persistent
+- You may have run them out of order. Run 001 first (creates tables), then 002 (policies on those tables), then 003 (functions)
+
+### "Cannot decrypt entry"
+
+- The encryption key is derived from the master password + salt. A mismatch (e.g. a different user trying to access the entry) will always fail — this is by design
 
 ---
 
-## 📈 Scaling Your Vault
+## Free Tier Limits
 
-### Free Tier Limits
+| Service | Free Limit |
+|---------|-----------|
+| Supabase database | 500 MB |
+| Supabase API | 50,000 MAU |
+| Supabase bandwidth | 2 GB/month |
+| Vercel bandwidth | 100 GB/month |
+| Vercel deployments | 100/day |
 
-**Supabase Free:**
-- 500 MB database
-- 2 GB bandwidth/month
-- 50K monthly active users
-
-**Vercel Free:**
-- 100 GB bandwidth/month
-- 100 deployments/day
-- Unlimited static hosting
-
-### When to Upgrade
-
-Consider upgrading when you hit:
-- 500+ users
-- 400+ MB database usage
-- Need custom domain on Supabase
-- Want better performance
+Consider upgrading Supabase when you approach 400 MB or 40,000 MAU.
 
 ---
 
-## ✅ Final Checklist
+## Final File Checklist
 
-- [ ] GitHub repository created and pushed
-- [ ] Supabase project created
-- [ ] Database migrations run successfully
-- [ ] API keys copied and saved
-- [ ] Vercel project created
-- [ ] Environment variables added
-- [ ] Deployment successful
-- [ ] Test account created
-- [ ] Test password added and retrieved
-- [ ] Lock/unlock tested
-- [ ] HTTPS verified
-- [ ] Custom domain configured (optional)
+Your deployed project should include all of these:
 
----
-
-## 🎉 You're Done!
-
-Your zero-knowledge password vault is now:
-- ✅ Live and accessible
-- ✅ Secured with Argon2id + AES-256-GCM
-- ✅ Protected with rate limiting and brute force prevention
-- ✅ Automatically deployed on every Git push
-
-**Share your vault URL:**
-`https://fard-vault-xxxxx.vercel.app`
-
----
-
-## 📞 Need Help?
-
-- **GitHub Issues:** [Report bugs](https://github.com/YOUR_USERNAME/fard-vault/issues)
-- **Supabase Docs:** [https://supabase.com/docs](https://supabase.com/docs)
-- **Vercel Docs:** [https://vercel.com/docs](https://vercel.com/docs)
+```
+fard-vault/
+├── index.html                              ✅
+├── login.html                              ✅ (server-side rate limiting)
+├── register.html                           ✅ (CSP meta tag)
+├── vault.html                              ✅ (registry pattern, URL validation, CSP)
+├── test.html                               ✅ (updated for RPC check)
+├── package.json                            ✅
+├── vite.config.js                          ✅
+├── vercel.json                             ✅ (HIBP added to connect-src, unsafe-eval removed)
+├── .env.example                            ✅
+├── .github/workflows/deploy.yml           ✅
+└── supabase/migrations/
+    ├── 001_initial_schema.sql              ✅
+    ├── 002_rls_policies.sql                ✅
+    └── 003_server_rate_limiting.sql        ✅ (NEW — server-side lockout RPCs)
+```
 
 ---
 

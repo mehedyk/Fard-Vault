@@ -2,6 +2,7 @@
 node_modules/
 package-lock.json
 yarn.lock
+DEPLOYMENT.md
 
 # Environment variables
 .env
