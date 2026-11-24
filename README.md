@@ -10,7 +10,7 @@
 
 *A modern, secure password manager with military-grade encryption that runs entirely in your browser.*
 
-[**🚀 Try Live Demo**](https://fard-vault.vercel.app) | [**📖 Documentation**](#-how-to-use) | [**🎲 Password Generator**](https://pw-generator-fard.netlify.app)
+[**🚀 Try Live Demo**](https://fard-vault.vercel.app) | [**📖 Documentation**](#-how-to-use) | [**🎲 Password Generator**](https://fard-pw.netlify.app/)
 
 </div>
 
@@ -39,7 +39,7 @@ Fard Vault isn't just another password manager. It's a **zero-knowledge vault** 
 - Intuitive user experience
 
 ### 🔗 **Works with Fard Generator**
-Seamlessly integrates with [Fard Password Generator](https://pw-generator-fard.netlify.app) for cryptographically secure password generation.
+Seamlessly integrates with [Fard Password Generator](https://fard-pw.netlify.app/) for cryptographically secure password generation.
 
 ---
 
@@ -321,7 +321,7 @@ Your master password is the **ONLY** way to decrypt your vault:
 ### Creating Strong Passwords
 
 **Use Fard Generator:**
-1. Click the link to [Fard Password Generator](https://pw-generator-fard.netlify.app)
+1. Click the link to [Fard Password Generator](https://fard-pw.netlify.app/)
 2. Adjust settings:
    - Length: 16+ characters recommended
    - Include: All character types
@@ -372,7 +372,7 @@ Best: Tr0pical-Mang0-Sunris3-2024!
 
 ## 🔗 Integration with Fard Generator
 
-Fard Vault works seamlessly with [Fard Password Generator](https://pw-generator-fard.netlify.app):
+Fard Vault works seamlessly with [Fard Password Generator](https://fard-pw.netlify.app/):
 
 ### Workflow
 ```
@@ -589,7 +589,7 @@ Ready to secure your digital life?
 
 Or generate a strong master password first:
 
-**[Use Fard Generator →](https://pw-generator-fard.netlify.app)**
+**[Use Fard Generator →](https://fard-pw.netlify.app/)**
 
 ---
 
