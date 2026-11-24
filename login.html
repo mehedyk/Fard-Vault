@@ -38,18 +38,29 @@
     }
 
     [data-theme="light"] {
-      --bg-page: #f8faf7;
-      --bg-surface: #ffffff;
-      --bg-surface-elevated: #edf2eb;
-      --border-subtle: #dbe4d7;
-      --border-strong: #b5c7b0;
-      --accent: #2e7d00;
-      --accent-muted: rgba(46, 125, 0, 0.12);
-      --accent-hover: #246300;
-      --text-main: #131712;
-      --text-secondary: #4b5548;
-      --text-muted: #748070;
+      --bg-page: #f3ede1;
+      --bg-surface: #ebe3d2;
+      --bg-surface-elevated: #e2d7c3;
+      --border-subtle: #d3c6ab;
+      --border-strong: #baa989;
+      --accent: #286e00;
+      --accent-muted: rgba(40, 110, 0, 0.14);
+      --accent-hover: #1f5400;
+      --text-main: #181916;
+      --text-secondary: #58574e;
+      --text-muted: #7c7a6e;
       --danger: #cf1322;
+    }
+
+    #curtainOverlay {
+      position: fixed;
+      inset: 0;
+      background: #f3ede1;
+      transform-origin: top;
+      transform: scaleY(0);
+      transition: transform 550ms cubic-bezier(0.76, 0, 0.24, 1);
+      z-index: 99999;
+      pointer-events: none;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -425,6 +436,7 @@
   </style>
 </head>
 <body>
+  <div id="curtainOverlay" aria-hidden="true"></div>
   <div class="auth-split-wrapper">
     <!-- Left Column: Branding & Zero-Knowledge Guarantee -->
     <div class="brand-side">
@@ -525,10 +537,12 @@
 
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    // Theme Management
+    // Theme Management with Curtain Animation
+    let isTransitioning = false;
+
     function initTheme() {
-      const theme = localStorage.getItem('theme') || 'dark';
-      applyTheme(theme);
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      applyTheme(savedTheme);
     }
 
     function applyTheme(theme) {
@@ -536,18 +550,43 @@
       const icon = document.getElementById('themeIcon');
       if (theme === 'light') {
         html.setAttribute('data-theme', 'light');
+        html.classList.remove('dark');
         if (icon) icon.textContent = '☀️';
       } else {
-        html.removeAttribute('data-theme');
+        html.setAttribute('data-theme', 'dark');
+        html.classList.add('dark');
         if (icon) icon.textContent = '🌙';
       }
     }
 
     window.toggleTheme = function() {
-      const current = document.documentElement.getAttribute('data-theme');
+      if (isTransitioning) return;
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
       const next = current === 'light' ? 'dark' : 'light';
-      localStorage.setItem('theme', next);
-      applyTheme(next);
+      const curtain = document.getElementById('curtainOverlay');
+
+      if (!curtain) {
+        applyTheme(next);
+        localStorage.setItem('theme', next);
+        return;
+      }
+
+      isTransitioning = true;
+      const targetBg = next === 'light' ? '#f3ede1' : '#080a08';
+      curtain.style.background = targetBg;
+      curtain.style.transformOrigin = 'top';
+      curtain.style.transform = 'scaleY(1)';
+
+      setTimeout(() => {
+        applyTheme(next);
+        localStorage.setItem('theme', next);
+
+        curtain.style.transform = 'scaleY(0)';
+        setTimeout(() => {
+          isTransitioning = false;
+        }, 550);
+      }, 450);
     };
 
     window.togglePasswordVisibility = function(fieldId) {
