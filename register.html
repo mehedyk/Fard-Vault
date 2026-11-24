@@ -1,523 +1,728 @@
 <!DOCTYPE html>
+<!--
+  Fard Vault (فَرْد Vault) - Zero-knowledge password manager
+  Developed by @mehedyk (https://github.com/mehedyk)
+  License: All rights reserved. Do not reuse without explicit permission.
+-->
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <!-- SECURITY FIX: Content Security Policy -->
-   
-  <title>Create Account - Fard Vault</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <title>Create account — Fard Vault</title>
+  <meta name="description" content="Create your zero-knowledge encrypted password vault."/>
+  
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+  <link rel="alternate icon" href="/favicon.ico"/>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
   <style>
+    :root {
+      --bg-page: #080a08;
+      --bg-surface: #10140f;
+      --bg-surface-elevated: #161c14;
+      --border-subtle: #1f281b;
+      --border-strong: #2e3d26;
+      --accent: #B4FF39;
+      --accent-muted: rgba(180, 255, 57, 0.14);
+      --accent-hover: #c4ff59;
+      --text-main: #f0f2ed;
+      --text-secondary: #9aa196;
+      --text-muted: #656d61;
+      --danger: #ff4d4f;
+      --warning: #ffaa33;
+      --font-display: 'Space Grotesk', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8faf7;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #edf2eb;
+      --border-subtle: #dbe4d7;
+      --border-strong: #b5c7b0;
+      --accent: #2e7d00;
+      --accent-muted: rgba(46, 125, 0, 0.12);
+      --accent-hover: #246300;
+      --text-main: #131712;
+      --text-secondary: #4b5548;
+      --text-muted: #748070;
+      --danger: #cf1322;
+      --warning: #d46b08;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
-    :root {
-      --bg-gradient-start: #0b0b0b;
-      --bg-gradient-end: #121212;
-      --text-primary: #e0e0e0;
-      --text-secondary: #c2f0c2;
-      --container-bg: rgba(20, 20, 20, 0.95);
-      --accent-green: #39ff14;
-      --accent-dark: #14532d;
-      --input-bg: #111;
-      --input-border: #333;
-      --danger-red: #ff4444;
-      --warning-yellow: #ffc107;
-      --info-text: #888;
-      --theme-btn-bg: rgba(255, 255, 255, 0.1);
-      --theme-btn-hover: rgba(255, 255, 255, 0.2);
-    }
-    
-    [data-theme="light"] {
-      --bg-gradient-start: #F9FAFB;
-      --bg-gradient-end: #F9FAFB;
-      --text-primary: #111827;
-      --text-secondary: #059669;
-      --container-bg: #FFFFFF;
-      --accent-green: #14532D;
-      --accent-dark: #0F4037;
-      --input-bg: #FFFFFF;
-      --input-border: #D1D5DB;
-      --danger-red: #DC2626;
-      --warning-yellow: #F59E0B;
-      --info-text: #6B7280;
-    }
-    
     body {
-      font-family: 'JetBrains Mono', monospace;
-      background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
-      color: var(--text-primary);
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--font-body);
       min-height: 100vh;
+      display: flex;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    .auth-split-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    /* Left Branding Column */
+    .brand-side {
+      background-color: var(--bg-surface);
+      border-right: 1px solid var(--border-subtle);
+      padding: 60px 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-side::after {
+      content: '';
+      position: absolute;
+      right: -80px;
+      bottom: -60px;
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, var(--accent-muted) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .brand-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+      z-index: 2;
+    }
+
+    .brand-logo-icon {
+      width: 30px;
+      height: 30px;
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-name .slash {
+      color: var(--accent);
+      margin: 0 2px;
+    }
+
+    .brand-hero {
+      z-index: 2;
+      margin: 40px 0;
+    }
+
+    .brand-hero h2 {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+    }
+
+    .brand-hero h2 .highlight {
+      color: var(--accent);
+      display: block;
+    }
+
+    .brand-hero p {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      max-width: 460px;
+    }
+
+    .watermark-emblem {
+      margin: 20px 0;
+      opacity: 0.18;
+      display: flex;
+      align-items: center;
+    }
+
+    .brand-bottom {
+      z-index: 2;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .brand-bottom .trust-tag {
+      color: var(--accent);
+    }
+
+    /* Right Form Column */
+    .form-side {
+      background-color: var(--bg-page);
+      padding: 50px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-y: auto;
+    }
+
+    .form-top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover { color: var(--accent); }
+
+    .theme-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+
+    .theme-toggle-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .form-card {
+      max-width: 460px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .form-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .form-title {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .form-desc {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .alert-error {
+      background: rgba(255, 77, 79, 0.12);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+    }
+
+    .alert-success {
+      background: var(--accent-muted);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+
+    .field-group {
+      margin-bottom: 18px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-control {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.92rem;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-muted);
+    }
+
+    .toggle-pass-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px;
+    }
+
+    .toggle-pass-btn:hover { color: var(--accent); }
+
+    /* Requirements Checklist */
+    .req-list {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .req-item {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+
+    .req-item.met {
+      color: var(--accent);
+    }
+
+    .match-status {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      margin-top: 6px;
+      min-height: 1.2em;
+    }
+
+    /* Warning Box */
+    .critical-warning-box {
+      margin-top: 20px;
+      padding: 16px;
+      background: rgba(255, 170, 51, 0.08);
+      border: 1px solid var(--warning);
+      border-radius: 8px;
+    }
+
+    .warning-label {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      color: var(--warning);
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .warning-text {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background-color: var(--accent);
+      color: #080a08;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
-      transition: all 0.3s ease;
-    }
-    
-    .auth-container {
-      max-width: 500px;
-      width: 100%;
-      background: var(--container-bg);
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(57, 255, 20, 0.1);
-      position: relative;
-    }
-    
-    [data-theme="light"] .auth-container {
-      box-shadow: 0 20px 40px rgba(20, 83, 45, 0.08);
-      border: 1px solid var(--input-border);
-    }
-    
-    .theme-toggle {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: transparent;
-      border: none;
-      font-size: 1.5em;
-      cursor: pointer;
-      transition: transform 0.3s;
-    }
-    
-    .theme-toggle:hover { transform: scale(1.2); }
-    
-    .auth-header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    
-    .auth-header h1 {
-      font-size: 2.5em;
-      margin-bottom: 10px;
-      background: linear-gradient(135deg, var(--accent-green), var(--accent-dark));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .auth-header p {
-      color: var(--text-secondary);
-      font-size: 0.9em;
-    }
-    
-    .form-group {
-      margin-bottom: 20px;
-    }
-    
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: var(--text-primary);
-    }
-    
-    .form-group input {
-      width: 100%;
-      padding: 12px;
-      background: var(--input-bg);
-      border: 2px solid var(--input-border);
-      border-radius: 10px;
-      color: var(--text-primary);
-      font-family: inherit;
-      transition: all 0.3s;
-    }
-    
-    .form-group input:focus {
-      outline: none;
-      border-color: var(--accent-green);
-      box-shadow: 0 0 0 3px rgba(57, 255, 20, 0.1);
-    }
-    
-    .strength-bar {
-      height: 8px;
-      background: var(--input-border);
-      border-radius: 4px;
-      margin-top: 8px;
-      overflow: hidden;
-    }
-    
-    .strength-fill {
-      height: 100%;
-      transition: width 0.3s, background 0.3s;
-    }
-    
-    .strength-weak { background: var(--danger-red); width: 25%; }
-    .strength-fair { background: var(--warning-yellow); width: 50%; }
-    .strength-good { background: #17a2b8; width: 75%; }
-    .strength-strong { background: var(--accent-green); width: 100%; }
-    
-    .strength-text {
-      font-size: 0.85em;
-      margin-top: 5px;
-      color: var(--text-secondary);
-    }
-    
-    .requirements {
-      background: rgba(57, 255, 20, 0.05);
-      border: 1px solid var(--accent-green);
-      padding: 15px;
-      border-radius: 8px;
-      margin: 15px 0;
-      font-size: 0.85em;
-    }
-    
-    .requirement {
-      margin: 5px 0;
-      color: var(--text-secondary);
-    }
-    
-    .requirement.met {
-      color: var(--accent-green);
-    }
-    
-    .btn {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, var(--accent-dark), var(--accent-green));
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-weight: bold;
-      font-size: 1em;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-family: inherit;
-    }
-    
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(57, 255, 20, 0.3);
-    }
-    
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    .alert {
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 0.9em;
-    }
-    
-    .alert-error {
-      background: rgba(255, 68, 68, 0.2);
-      border: 1px solid var(--danger-red);
-      color: var(--danger-red);
-    }
-    
-    .alert-success {
-      background: rgba(57, 255, 20, 0.2);
-      border: 1px solid var(--accent-green);
-      color: var(--accent-green);
-    }
-    
-    .auth-footer {
-      text-align: center;
-      margin-top: 25px;
-      padding-top: 20px;
-      border-top: 1px solid var(--input-border);
-      color: var(--text-secondary);
-      font-size: 0.9em;
-    }
-    
-    .auth-footer a {
-      color: var(--accent-green);
-      text-decoration: none;
-      font-weight: bold;
-    }
-    
-    .auth-footer a:hover {
-      text-decoration: underline;
-    }
-    
-    .footer-links {
-      margin-bottom: 15px;
-    }
-    
-    .footer-credit {
-      font-size: 0.85em;
-      color: var(--info-text);
-      line-height: 1.6;
-    }
-    
-    .warning-box {
-      background: rgba(255, 193, 7, 0.1);
-      border: 1px solid var(--warning-yellow);
-      padding: 15px;
-      border-radius: 8px;
-      margin: 15px 0;
-      font-size: 0.85em;
-      line-height: 1.5;
-      color: var(--warning-yellow);
+      gap: 8px;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    [data-theme="light"] .btn-submit {
+      color: #ffffff;
     }
+
+    .btn-submit:hover:not(:disabled) {
+      background-color: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .form-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .form-footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .page-footer-note {
+      text-align: center;
+      margin-top: 36px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .page-footer-note a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    .page-footer-note a:hover { color: var(--accent); }
 
     .spinner {
       display: inline-block;
       animation: spin 1s linear infinite;
     }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 900px) {
+      .auth-split-wrapper {
+        grid-template-columns: 1fr;
+      }
+      .brand-side {
+        display: none;
+      }
+      .form-side {
+        padding: 30px 20px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="auth-container">
-    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
-      <span id="themeIcon">🌙</span>
-    </button>
-    
-    <div class="auth-header">
-      <h1>🔐 Fard Vault</h1>
-      <p>Create your zero-knowledge vault</p>
-    </div>
-    
-    <div id="alertContainer"></div>
-    
-    <form id="registerForm" onsubmit="handleRegister(event)">
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" required autocomplete="email" placeholder="your@email.com"/>
-      </div>
-      
-      <div class="form-group">
-        <label for="password">Master Password</label>
-        <input type="password" id="password" required autocomplete="new-password" minlength="12"
-               placeholder="Create a strong master password" oninput="checkPasswordStrength()"/>
-        <div class="strength-bar">
-          <div class="strength-fill" id="strengthBar"></div>
+  <div class="auth-split-wrapper">
+    <!-- Left Column: Branding -->
+    <div class="brand-side">
+      <a href="/" class="brand-top">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" class="brand-logo-icon" fill="none">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M0 0H14L18 4V18H0V0ZM3 3V15H15V6L12 3H3Z" fill="var(--accent)"/>
+          <path d="M5.5 6H12V8.5H8V9.5H11V12H8V15H5.5V6Z" fill="var(--accent)"/>
+        </svg>
+        <span class="brand-name">fard<span class="slash">/</span>vault</span>
+      </a>
+
+      <div class="brand-hero">
+        <h2>
+          Your vault.<br>
+          Nobody else's.<br>
+          <span class="highlight">Not even ours.</span>
+        </h2>
+        <p>
+          Your master password stays on your device. Your passwords are encrypted before they sync. You hold the only key.
+        </p>
+
+        <div class="watermark-emblem">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="130" height="130" fill="none">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M0 0H14L18 4V18H0V0ZM3 3V15H15V6L12 3H3Z" fill="var(--accent)"/>
+            <path d="M5.5 6H12V8.5H8V9.5H11V12H8V15H5.5V6Z" fill="var(--accent)"/>
+          </svg>
         </div>
-        <div class="strength-text" id="strengthText"></div>
       </div>
-      
-      <div class="requirements">
-        <div class="requirement" id="req-length">❌ At least 12 characters</div>
-        <div class="requirement" id="req-upper">❌ One uppercase letter</div>
-        <div class="requirement" id="req-lower">❌ One lowercase letter</div>
-        <div class="requirement" id="req-number">❌ One number</div>
-        <div class="requirement" id="req-special">❌ One special character</div>
+
+      <div class="brand-bottom">
+        <span>AES-256-GCM / ARGON2ID</span>
+        <span class="trust-tag">ZERO KNOWLEDGE. NO EXCEPTIONS.</span>
       </div>
-      
-      <div class="form-group">
-        <label for="confirmPassword">Confirm Master Password</label>
-        <input type="password" id="confirmPassword" required autocomplete="new-password" minlength="12"
-               placeholder="Re-enter your master password" oninput="checkPasswordMatch()"/>
-        <div class="strength-text" id="matchText"></div>
+    </div>
+
+    <!-- Right Column: Registration Form -->
+    <div class="form-side">
+      <div class="form-top-nav">
+        <a href="/" class="back-link">&larr; Back to home</a>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
+          <span id="themeIcon">🌙</span>
+        </button>
       </div>
-      
-      <div class="warning-box">
-        ⚠️ <strong>CRITICAL WARNING:</strong> Your master password encrypts all your data. 
-        If you lose it, <strong>we cannot recover it</strong>. Write it down and store it securely.
+
+      <div class="form-card">
+        <span class="form-eyebrow">[ CREATE ACCOUNT ]</span>
+        <h1 class="form-title">Your privacy starts here.</h1>
+        <p class="form-desc">One master password. A vault only you can open.</p>
+
+        <div id="alertBox" class="alert"></div>
+
+        <form id="registerForm" onsubmit="handleRegister(event)">
+          <div class="field-group">
+            <label class="field-label" for="email">Email</label>
+            <div class="input-wrapper">
+              <input type="email" id="email" class="input-control" required autocomplete="email" placeholder="you@example.com"/>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="password">Master password</label>
+            <div class="input-wrapper">
+              <input type="password" id="password" class="input-control" required autocomplete="new-password" minlength="12" placeholder="Create a strong master password" oninput="validatePassword()"/>
+              <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('password')" title="Show / hide">👁️</button>
+            </div>
+
+            <!-- Password Requirements Checklist -->
+            <div class="req-list">
+              <div class="req-item" id="req-len"><span>○</span> At least 12 characters</div>
+              <div class="req-item" id="req-upper"><span>○</span> One uppercase letter</div>
+              <div class="req-item" id="req-lower"><span>○</span> One lowercase letter</div>
+              <div class="req-item" id="req-num"><span>○</span> One number</div>
+              <div class="req-item" id="req-special"><span>○</span> One special character</div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="confirmPassword">Confirm master password</label>
+            <div class="input-wrapper">
+              <input type="password" id="confirmPassword" class="input-control" required autocomplete="new-password" minlength="12" placeholder="Enter your master password again" oninput="checkMatch()"/>
+              <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('confirmPassword')" title="Show / hide">👁️</button>
+            </div>
+            <div class="match-status" id="matchStatus"></div>
+          </div>
+
+          <!-- Critical Warning Box -->
+          <div class="critical-warning-box">
+            <div class="warning-label">! THERE IS NO PASSWORD RESET</div>
+            <p class="warning-text">
+              Your master password encrypts all your data. If you lose it, we cannot recover it. Write it down and store it securely.
+            </p>
+          </div>
+
+          <button type="submit" class="btn-submit" id="submitBtn" disabled>
+            <span>Create vault &rarr;</span>
+          </button>
+        </form>
+
+        <div class="form-footer">
+          Already have an account? <a href="/login.html">Log in &rarr;</a>
+        </div>
       </div>
-      
-      <button type="submit" class="btn" id="registerBtn" disabled>
-        🔒 Create Vault
-      </button>
-    </form>
-    
-    <div class="auth-footer">
-      <div class="footer-links">
-        Already have an account? <a href="/login.html">Login</a><br>
-        <a href="/">← Back to home</a>
-      </div>
-      <div class="footer-credit">
-        A <a href="https://github.com/mehedyk" target="_blank" rel="noopener noreferrer">mehedyk</a> product. 
-        Works with <a href="https://pw-generator-fard.netlify.app" target="_blank" rel="noopener noreferrer">Fard Password Generator</a>. 
-        All rights reserved. &copy; <span id="currentYear"></span>.
+
+      <div class="page-footer-note">
+        A <a href="https://github.com/mehedyk" target="_blank" rel="noopener noreferrer">mehedyk</a> product. &bull; 
+        <a href="https://fard-pw.netlify.app/" target="_blank" rel="noopener noreferrer">Fard Password Generator</a> &bull; 
+        &copy; <span id="currentYear">2026</span> Fard Vault. All rights reserved.
       </div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
-  
   <script type="module">
+    import { deriveKey, generateSalt } from '/src/lib/crypto.js';
+    import { authService } from '/src/lib/auth-service.js';
+    import { vaultService } from '/src/lib/vault-service.js';
+
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-    
-    if (!SUPABASE_URL || !SUPABASE_KEY) {
-      console.error('❌ Environment variables not set!');
-      console.error('VITE_SUPABASE_URL:', SUPABASE_URL || 'MISSING');
-      console.error('VITE_SUPABASE_ANON_KEY:', SUPABASE_KEY ? 'Set ✅' : 'MISSING');
+    // Theme Management
+    function initTheme() {
+      const theme = localStorage.getItem('theme') || 'dark';
+      applyTheme(theme);
     }
-    
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    
-    let requirements = {
-      length: false,
+
+    function applyTheme(theme) {
+      const html = document.documentElement;
+      const icon = document.getElementById('themeIcon');
+      if (theme === 'light') {
+        html.setAttribute('data-theme', 'light');
+        if (icon) icon.textContent = '☀️';
+      } else {
+        html.removeAttribute('data-theme');
+        if (icon) icon.textContent = '🌙';
+      }
+    }
+
+    window.toggleTheme = function() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme', next);
+      applyTheme(next);
+    };
+
+    window.togglePasswordVisibility = function(fieldId) {
+      const input = document.getElementById(fieldId);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    };
+
+    function showAlert(msg, type = 'error') {
+      const box = document.getElementById('alertBox');
+      box.textContent = msg;
+      box.className = `alert alert-${type}`;
+      box.style.display = 'block';
+    }
+
+    const checks = {
+      len: false,
       upper: false,
       lower: false,
-      number: false,
+      num: false,
       special: false,
       match: false
     };
-    
-    function showAlert(message, type = 'error') {
-      const container = document.getElementById('alertContainer');
-      container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-      setTimeout(() => container.innerHTML = '', 5000);
-    }
-    
-    window.checkPasswordStrength = function() {
-      const password = document.getElementById('password').value;
-      const bar = document.getElementById('strengthBar');
-      const text = document.getElementById('strengthText');
-      
-      requirements.length = password.length >= 12;
-      requirements.upper = /[A-Z]/.test(password);
-      requirements.lower = /[a-z]/.test(password);
-      requirements.number = /[0-9]/.test(password);
-      requirements.special = /[^A-Za-z0-9]/.test(password);
-      
-      document.getElementById('req-length').className = requirements.length ? 'requirement met' : 'requirement';
-      document.getElementById('req-length').textContent = (requirements.length ? '✅' : '❌') + ' At least 12 characters';
-      document.getElementById('req-upper').className = requirements.upper ? 'requirement met' : 'requirement';
-      document.getElementById('req-upper').textContent = (requirements.upper ? '✅' : '❌') + ' One uppercase letter';
-      document.getElementById('req-lower').className = requirements.lower ? 'requirement met' : 'requirement';
-      document.getElementById('req-lower').textContent = (requirements.lower ? '✅' : '❌') + ' One lowercase letter';
-      document.getElementById('req-number').className = requirements.number ? 'requirement met' : 'requirement';
-      document.getElementById('req-number').textContent = (requirements.number ? '✅' : '❌') + ' One number';
-      document.getElementById('req-special').className = requirements.special ? 'requirement met' : 'requirement';
-      document.getElementById('req-special').textContent = (requirements.special ? '✅' : '❌') + ' One special character';
-      
-      let score = Object.values(requirements).filter(Boolean).length - 1; // exclude match
-      
-      if (score <= 1) {
-        bar.className = 'strength-fill strength-weak';
-        text.textContent = 'Weak password';
-      } else if (score <= 3) {
-        bar.className = 'strength-fill strength-fair';
-        text.textContent = 'Fair password';
-      } else if (score <= 4) {
-        bar.className = 'strength-fill strength-good';
-        text.textContent = 'Good password';
-      } else {
-        bar.className = 'strength-fill strength-strong';
-        text.textContent = 'Very strong password';
-      }
-      
-      checkPasswordMatch();
-      updateSubmitButton();
+
+    window.validatePassword = function() {
+      const p = document.getElementById('password').value;
+      checks.len = p.length >= 12;
+      checks.upper = /[A-Z]/.test(p);
+      checks.lower = /[a-z]/.test(p);
+      checks.num = /[0-9]/.test(p);
+      checks.special = /[^A-Za-z0-9]/.test(p);
+
+      updateCheckUI('req-len', checks.len);
+      updateCheckUI('req-upper', checks.upper);
+      updateCheckUI('req-lower', checks.lower);
+      updateCheckUI('req-num', checks.num);
+      updateCheckUI('req-special', checks.special);
+
+      checkMatch();
+      updateButtonState();
     };
-    
-    window.checkPasswordMatch = function() {
-      const password = document.getElementById('password').value;
-      const confirm = document.getElementById('confirmPassword').value;
-      const matchText = document.getElementById('matchText');
-      
-      if (!confirm) {
-        matchText.textContent = '';
-        requirements.match = false;
-      } else if (password === confirm) {
-        matchText.textContent = '✅ Passwords match';
-        matchText.style.color = 'var(--accent-green)';
-        requirements.match = true;
+
+    function updateCheckUI(id, passed) {
+      const el = document.getElementById(id);
+      if (passed) {
+        el.classList.add('met');
+        el.querySelector('span').textContent = '✓';
       } else {
-        matchText.textContent = '❌ Passwords do not match';
-        matchText.style.color = 'var(--danger-red)';
-        requirements.match = false;
+        el.classList.remove('met');
+        el.querySelector('span').textContent = '○';
       }
-      
-      updateSubmitButton();
-    };
-    
-    function updateSubmitButton() {
-      const btn = document.getElementById('registerBtn');
-      btn.disabled = !Object.values(requirements).every(Boolean);
     }
-    
+
+    window.checkMatch = function() {
+      const p = document.getElementById('password').value;
+      const c = document.getElementById('confirmPassword').value;
+      const statusEl = document.getElementById('matchStatus');
+
+      if (!c) {
+        statusEl.textContent = '';
+        checks.match = false;
+      } else if (p === c) {
+        statusEl.textContent = '✓ Passwords match';
+        statusEl.style.color = 'var(--accent)';
+        checks.match = true;
+      } else {
+        statusEl.textContent = '✗ Passwords do not match';
+        statusEl.style.color = 'var(--danger)';
+        checks.match = false;
+      }
+
+      updateButtonState();
+    };
+
+    function updateButtonState() {
+      const allPassed = Object.values(checks).every(Boolean);
+      document.getElementById('submitBtn').disabled = !allPassed;
+    }
+
+    authService.init();
+
     window.handleRegister = async function(e) {
       e.preventDefault();
-      
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      const btn = document.getElementById('registerBtn');
-      
+      const btn = document.getElementById('submitBtn');
+
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner">⏳</span> Creating vault...';
-      
+      btn.innerHTML = '<span class="spinner">⏳</span> Creating encrypted vault...';
+
       try {
-        const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
-        if (authError) throw authError;
-        
-        const salt = crypto.getRandomValues(new Uint8Array(16));
-        const saltBase64 = btoa(String.fromCharCode(...salt));
-        
-        await argon2.hash({
-          pass: password,
-          salt: salt,
-          time: 4,
-          mem: 65536,
-          hashLen: 32,
-          parallelism: 4,
-          type: argon2.ArgonType.Argon2id
-        });
-        
-        const { error: keyError } = await supabase.from('user_keys').insert({
-          user_id: authData.user.id,
-          salt: saltBase64
-        });
-        if (keyError) throw keyError;
-        
-        const defaultCategories = [
-          { user_id: authData.user.id, name: 'Social Media', icon: '🌐', color: '#1DA1F2' },
-          { user_id: authData.user.id, name: 'Banking',      icon: '💳', color: '#00C853' },
-          { user_id: authData.user.id, name: 'Email',        icon: '📧', color: '#EA4335' },
-          { user_id: authData.user.id, name: 'Work',         icon: '💼', color: '#0078D4' },
-          { user_id: authData.user.id, name: 'Gaming',       icon: '🎮', color: '#9146FF' },
-          { user_id: authData.user.id, name: 'Shopping',     icon: '🛒', color: '#FF9800' },
-          { user_id: authData.user.id, name: 'Other',        icon: '📁', color: '#39ff14' }
-        ];
-        
-        await supabase.from('categories').insert(defaultCategories).catch(() => {
-          console.log('Categories already exist or trigger created them');
-        });
-        
+        // Step 1: Sign up identity via Clerk
+        await authService.signUpWithEmail(email);
+        const user = authService.getUser() || { id: 'user_' + btoa(email).slice(0, 10), email };
+
+        // Step 2: Generate fresh random 16-byte salt
+        const salt = generateSalt();
+
+        // Step 3: Zero-knowledge Argon2id key derivation
+        const key = await deriveKey(password, salt);
+
+        // Step 4: Persist salt in MongoDB backend
+        await vaultService.saveSalt(user.id, salt);
+
+        // Step 5: Store session in sessionStorage
         sessionStorage.setItem('master_password', password);
-        
-        showAlert('Account created successfully! Redirecting...', 'success');
-        setTimeout(() => { window.location.href = '/vault.html'; }, 1500);
-        
-      } catch (error) {
-        console.error('Registration error:', error);
-        showAlert(error.message || 'Failed to create account', 'error');
+        sessionStorage.setItem('user_id', user.id);
+        sessionStorage.setItem('user_email', user.email);
+
+        showAlert('Vault created successfully! Welcome to Fard Vault.', 'success');
+        setTimeout(() => {
+          window.location.href = '/vault.html';
+        }, 300);
+
+      } catch (err) {
+        console.error('Registration error:', err);
+        showAlert(err.message || 'Vault creation failed. Please try again.', 'error');
         btn.disabled = false;
-        btn.innerHTML = '🔒 Create Vault';
+        btn.innerHTML = '<span>Create vault &rarr;</span>';
       }
     };
-    
-    window.toggleTheme = function() {
-      const html = document.documentElement;
-      const icon = document.getElementById('themeIcon');
-      if (html.getAttribute('data-theme') === 'light') {
-        html.removeAttribute('data-theme');
-        icon.textContent = '🌙';
-        localStorage.setItem('theme', 'dark');
-      } else {
-        html.setAttribute('data-theme', 'light');
-        icon.textContent = '☀️';
-        localStorage.setItem('theme', 'light');
-      }
-    };
-    
-    const theme = localStorage.getItem('theme');
-    if (theme === 'light') {
-      document.documentElement.setAttribute('data-theme', 'light');
-      document.getElementById('themeIcon').textContent = '☀️';
-    }
-    
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && sessionStorage.getItem('master_password')) {
-        window.location.href = '/vault.html';
-      }
-    });
+
+    initTheme();
   </script>
 </body>
 </html>
