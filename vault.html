@@ -1,1172 +1,1320 @@
 <!DOCTYPE html>
+<!--
+  Fard Vault (فَرْد Vault) - Zero-knowledge password manager
+  Developed by @mehedyk (https://github.com/mehedyk)
+  License: All rights reserved. Do not reuse without explicit permission.
+-->
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <!-- SECURITY FIX: Content Security Policy -->
-   
-  <title>Fard Vault - Your Passwords</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <title>Personal Vault — Fard Vault</title>
+  <meta name="description" content="Your zero-knowledge encrypted password vault."/>
+  
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+  <link rel="alternate icon" href="/favicon.ico"/>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
   <style>
+    :root {
+      --bg-page: #080a08;
+      --bg-surface: #10140f;
+      --bg-surface-elevated: #151c14;
+      --bg-surface-hover: #1b2419;
+      --border-subtle: #1f281b;
+      --border-strong: #2e3d26;
+      --accent: #B4FF39;
+      --accent-muted: rgba(180, 255, 57, 0.14);
+      --accent-hover: #c4ff59;
+      --text-main: #f0f2ed;
+      --text-secondary: #9aa196;
+      --text-muted: #656d61;
+      --danger: #ff4d4f;
+      --warning: #ffaa33;
+      --font-display: 'Space Grotesk', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f8faf7;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #edf2eb;
+      --bg-surface-hover: #e3ebd8;
+      --border-subtle: #dbe4d7;
+      --border-strong: #b5c7b0;
+      --accent: #2e7d00;
+      --accent-muted: rgba(46, 125, 0, 0.12);
+      --accent-hover: #246300;
+      --text-main: #131712;
+      --text-secondary: #4b5548;
+      --text-muted: #748070;
+      --danger: #cf1322;
+      --warning: #d46b08;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
-    :root {
-      --bg-gradient-start: #0b0b0b;
-      --bg-gradient-end: #121212;
-      --text-primary: #e0e0e0;
-      --text-secondary: #c2f0c2;
-      --container-bg: rgba(20, 20, 20, 0.95);
-      --accent-green: #39ff14;
-      --accent-dark: #14532d;
-      --input-bg: #111;
-      --input-border: #333;
-      --card-bg: #1a1a1a;
-      --hover-bg: #222;
-      --danger-red: #ff4444;
-    }
-    
-    [data-theme="light"] {
-      --bg-gradient-start: #F9FAFB;
-      --bg-gradient-end: #F9FAFB;
-      --text-primary: #111827;
-      --text-secondary: #FCD34D;
-      --container-bg: #FFFFFF;
-      --accent-green: #14532D;
-      --accent-dark: #0F4037;
-      --input-bg: #FFFFFF;
-      --input-border: #D1D5DB;
-      --card-bg: #F9FAFB;
-      --hover-bg: #F3F4F6;
-      --danger-red: #DC2626;
-    }
-    
     body {
-      font-family: 'JetBrains Mono', monospace;
-      background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
-      color: var(--text-primary);
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--font-body);
       min-height: 100vh;
-      transition: all 0.3s ease;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      display: flex;
+      flex-direction: column;
     }
-    
-    .vault-container {
+
+    /* Layout */
+    .vault-app {
       display: grid;
-      grid-template-columns: 250px 1fr;
-      height: 100vh;
-      max-width: 1600px;
-      margin: 0 auto;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
     }
-    
+
+    /* Sidebar */
     .sidebar {
-      background: var(--container-bg);
-      padding: 20px;
-      border-right: 2px solid var(--input-border);
+      background-color: var(--bg-surface);
+      border-right: 1px solid var(--border-subtle);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       overflow-y: auto;
     }
-    
-    .sidebar-header {
+
+    .sidebar-brand {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 30px;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+      margin-bottom: 24px;
     }
-    
-    .logo { font-size: 1.5em; font-weight: bold; }
-    
-    .theme-toggle {
-      background: transparent;
-      border: none;
-      font-size: 1.5em;
-      cursor: pointer;
-      transition: transform 0.3s;
+
+    .brand-logo-icon {
+      width: 26px;
+      height: 26px;
     }
-    
-    .theme-toggle:hover { transform: scale(1.2); }
-    
-    .category-list {
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-name .slash {
+      color: var(--accent);
+      margin: 0 2px;
+    }
+
+    .vault-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--accent-muted);
+      border-radius: 20px;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .nav-section-title {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      padding: 0 10px;
+      text-transform: uppercase;
+    }
+
+    .cat-nav {
       list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 24px;
     }
-    
-    .category-item {
-      padding: 12px;
-      margin-bottom: 8px;
-      background: var(--card-bg);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
+
+    .cat-btn {
+      width: 100%;
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-    
-    .category-item:hover { background: var(--hover-bg); transform: translateX(3px); }
-    .category-item.active { background: var(--accent-green); color: #000; font-weight: bold; }
-    
-    .main-content {
-      padding: 20px;
-      overflow-y: auto;
-    }
-    
-    .top-bar {
-      display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-      flex-wrap: wrap;
-      gap: 15px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
     }
-    
-    .search-box {
-      flex: 1;
-      min-width: 300px;
-      padding: 12px;
-      background: var(--input-bg);
-      border: 2px solid var(--input-border);
+
+    .cat-btn:hover {
+      background: var(--bg-surface-elevated);
+      color: var(--text-main);
+    }
+
+    .cat-btn.active {
+      background: var(--accent-muted);
+      border-color: var(--border-strong);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .cat-count {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      opacity: 0.8;
+    }
+
+    /* Security Health Widget */
+    .health-widget {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
       border-radius: 10px;
-      color: var(--text-primary);
-      font-family: inherit;
+      padding: 14px;
+      margin-bottom: 20px;
     }
-    
-    .search-box:focus { outline: none; border-color: var(--accent-green); }
-    
-    .top-actions {
+
+    .health-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .health-stat {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Sidebar Footer */
+    .sidebar-footer {
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 16px;
       display: flex;
+      flex-direction: column;
       gap: 10px;
     }
-    
-    .btn {
-      padding: 10px 20px;
-      background: linear-gradient(135deg, var(--accent-dark), var(--accent-green));
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.3s;
-      font-family: inherit;
+
+    .backup-btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
-    
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(57, 255, 20, 0.3); }
-    .btn-danger { background: var(--danger-red); }
-    .btn-secondary { background: #555; }
-    
+
+    .btn-sm {
+      padding: 7px 10px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      text-align: center;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface-elevated);
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-sm:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Main Content Area */
+    .main-area {
+      padding: 30px 36px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Top Toolbar */
+    .top-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex: 1;
+      max-width: 480px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 11px 16px 11px 38px;
+      color: var(--text-main);
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-new-item {
+      background: var(--accent);
+      color: #080a08;
+      border: 1px solid var(--accent);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    [data-theme="light"] .btn-new-item {
+      color: #ffffff;
+    }
+
+    .btn-new-item:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-lock {
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-lock:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .theme-toggle-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+
+    .theme-toggle-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Entries Grid */
     .entries-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
     }
-    
+
     .entry-card {
-      background: var(--card-bg);
-      padding: 20px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
       border-radius: 12px;
-      border: 2px solid var(--input-border);
-      transition: all 0.3s;
-    }
-    
-    .entry-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(57, 255, 20, 0.2);
-      border-color: var(--accent-green);
-    }
-    
-    .entry-header {
+      padding: 18px;
       display: flex;
+      flex-direction: column;
       justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 15px;
-    }
-    
-    .entry-title {
-      font-size: 1.2em;
-      font-weight: bold;
-      color: var(--accent-green);
-    }
-    
-    .entry-actions {
-      display: flex;
-      gap: 8px;
-    }
-    
-    .icon-btn {
-      background: transparent;
-      border: none;
-      font-size: 1.2em;
-      cursor: pointer;
+      gap: 14px;
       transition: all 0.2s;
-      padding: 5px;
     }
-    
-    .icon-btn:hover { transform: scale(1.2); }
-    
-    .entry-field {
-      margin-bottom: 10px;
-      padding: 8px;
-      background: var(--input-bg);
-      border-radius: 6px;
-      font-size: 0.9em;
+
+    .entry-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
     }
-    
-    .entry-field label {
-      display: block;
-      color: var(--text-secondary);
-      font-size: 0.8em;
-      margin-bottom: 4px;
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
     }
-    
-    .password-field {
+
+    .card-header-group {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
     }
-    
-    .password-value {
-      flex: 1;
-      font-family: monospace;
-    }
-    
-    .password-hidden { filter: blur(5px); user-select: none; }
-    
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 1000;
+
+    .service-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--accent);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
       align-items: center;
       justify-content: center;
     }
-    
-    .modal.active { display: flex; }
-    
-    .modal-content {
-      background: var(--container-bg);
-      padding: 30px;
-      border-radius: 15px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
+
+    .service-title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1.05rem;
+      line-height: 1.2;
     }
-    
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
+
+    .service-cat-pill {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
-    
-    .modal-title { font-size: 1.5em; color: var(--accent-green); }
-    
-    .close-btn {
+
+    .favorite-toggle {
       background: transparent;
       border: none;
-      font-size: 2em;
+      color: var(--text-muted);
       cursor: pointer;
-      color: var(--text-primary);
+      font-size: 1.1rem;
+      transition: color 0.2s;
     }
-    
-    .form-group {
-      margin-bottom: 20px;
+
+    .favorite-toggle.is-fav {
+      color: #ffaa33;
     }
-    
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-    }
-    
-    .form-group input,
-    .form-group textarea,
-    .form-group select {
-      width: 100%;
-      padding: 12px;
-      background: var(--input-bg);
-      border: 2px solid var(--input-border);
+
+    .card-field {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
       border-radius: 8px;
-      color: var(--text-primary);
-      font-family: inherit;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
-    
-    .form-group textarea { resize: vertical; min-height: 100px; }
-    
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--accent-green);
-    }
-    
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 20px;
-      background: var(--accent-green);
-      color: #000;
-      border-radius: 8px;
-      font-weight: bold;
-      z-index: 2000;
-      animation: slideIn 0.3s ease;
-    }
-    
-    @keyframes slideIn {
-      from { transform: translateX(400px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    
-    .notification.error { background: var(--danger-red); color: white; }
-    .notification.success { background: var(--accent-green); color: #000; }
-    
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
+
+    .field-text {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
       color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    
-    .empty-state-icon { font-size: 4em; margin-bottom: 20px; }
-    
-    .loading { 
-      text-align: center; 
-      padding: 40px; 
+
+    .field-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
-    
-    .skeleton-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 20px;
-      padding: 20px;
-    }
-    
-    .skeleton-card {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 12px;
-      border: 2px solid var(--input-border);
-      animation: skeleton-pulse 1.5s ease-in-out infinite;
-    }
-    
-    .skeleton-line {
-      height: 20px;
-      background: linear-gradient(90deg, var(--input-border) 25%, var(--hover-bg) 50%, var(--input-border) 75%);
-      background-size: 200% 100%;
-      animation: skeleton-shimmer 1.5s ease-in-out infinite;
+
+    .icon-action-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px;
       border-radius: 4px;
-      margin-bottom: 10px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
     }
-    
-    .skeleton-line.short { width: 60%; }
-    .skeleton-line.medium { width: 80%; }
-    
-    @keyframes skeleton-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
+
+    .icon-action-btn:hover {
+      color: var(--accent);
     }
-    
-    @keyframes skeleton-shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 10px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
     }
-    
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
+
+    .card-actions-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    
-    .entry-card {
-      animation: fadeInUp 0.4s ease-out;
-    }
-    
-    @keyframes successPulse {
-      0%, 100% { transform: scale(1); }
-      50%       { transform: scale(1.05); }
-    }
-    
-    .success-animation {
-      animation: successPulse 0.3s ease-in-out;
-    }
-    
-    .vault-footer {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 20px;
-      border-top: 1px solid var(--input-border);
-      font-size: 0.85em;
+
+    .card-btn {
+      background: none;
+      border: none;
       color: var(--text-secondary);
-      background: var(--container-bg);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: color 0.2s;
     }
-    
-    .vault-footer a {
-      color: var(--accent-green);
-      text-decoration: none;
-      font-weight: bold;
+
+    .card-btn:hover { color: var(--accent); }
+    .card-btn.delete-btn:hover { color: var(--danger); }
+
+    /* Empty state */
+    .empty-state {
+      grid-column: 1 / -1;
+      padding: 80px 20px;
+      text-align: center;
+      background: var(--bg-surface);
+      border: 1px dashed var(--border-subtle);
+      border-radius: 16px;
     }
-    
-    .vault-footer a:hover {
-      text-decoration: underline;
+
+    .empty-icon {
+      font-size: 2.8rem;
+      margin-bottom: 16px;
+      color: var(--accent);
     }
-    
-    @media (max-width: 768px) {
-      .vault-container { grid-template-columns: 1fr; }
-      .sidebar { border-right: none; border-bottom: 2px solid var(--input-border); }
-      .entries-grid { grid-template-columns: 1fr; }
+
+    .empty-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .empty-desc {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      padding: 12px 18px;
+      background: var(--bg-surface);
+      border: 1px solid var(--accent);
+      color: var(--text-main);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .toast.error {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 900;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      max-width: 500px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.3rem;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .modal-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .modal-input {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .modal-input:focus {
+      border-color: var(--accent);
+    }
+
+    .modal-actions {
+      padding: 16px 24px;
+      background: var(--bg-surface-elevated);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    @media (max-width: 860px) {
+      .vault-app {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        display: none;
+      }
+      .main-area {
+        padding: 20px 16px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="vault-container">
+  <div class="vault-app">
+    <!-- Sidebar Navigation -->
     <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="logo">🔐 Fard Vault</div>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
-          <span id="themeIcon">🌙</span>
-        </button>
+      <div>
+        <a href="/" class="sidebar-brand">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" class="brand-logo-icon" fill="none">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M0 0H14L18 4V18H0V0ZM3 3V15H15V6L12 3H3Z" fill="var(--accent)"/>
+            <path d="M5.5 6H12V8.5H8V9.5H11V12H8V15H5.5V6Z" fill="var(--accent)"/>
+          </svg>
+          <span class="brand-name">fard<span class="slash">/</span>vault</span>
+        </a>
+
+        <div class="vault-status-pill">
+          <span class="status-dot"></span>
+          <span>UNLOCKED &bull; AES-256-GCM</span>
+        </div>
+
+        <div class="nav-section-title">Categories</div>
+        <ul class="cat-nav">
+          <li>
+            <button class="cat-btn active" onclick="setCategory('all')" id="cat-all">
+              <span>🗂️ All items</span>
+              <span class="cat-count" id="count-all">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="cat-btn" onclick="setCategory('favorites')" id="cat-favorites">
+              <span>⭐ Favorites</span>
+              <span class="cat-count" id="count-favorites">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="cat-btn" onclick="setCategory('social')" id="cat-social">
+              <span>🌐 Social Media</span>
+              <span class="cat-count" id="count-social">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="cat-btn" onclick="setCategory('banking')" id="cat-banking">
+              <span>💳 Banking</span>
+              <span class="cat-count" id="count-banking">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="cat-btn" onclick="setCategory('email')" id="cat-email">
+              <span>📧 Email</span>
+              <span class="cat-count" id="count-email">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="cat-btn" onclick="setCategory('work')" id="cat-work">
+              <span>💼 Work</span>
+              <span class="cat-count" id="count-work">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="cat-btn" onclick="setCategory('gaming')" id="cat-gaming">
+              <span>🎮 Gaming</span>
+              <span class="cat-count" id="count-gaming">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="cat-btn" onclick="setCategory('shopping')" id="cat-shopping">
+              <span>🛒 Shopping</span>
+              <span class="cat-count" id="count-shopping">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="cat-btn" onclick="setCategory('other')" id="cat-other">
+              <span>📁 Other</span>
+              <span class="cat-count" id="count-other">0</span>
+            </button>
+          </li>
+        </ul>
+
+        <!-- Security Health Widget -->
+        <div class="health-widget">
+          <div class="health-title">VAULT HEALTH</div>
+          <div class="health-stat" id="healthStatus">Scanning entries...</div>
+        </div>
       </div>
-      
-      <ul class="category-list" id="categoryList">
-        <li class="category-item active" data-category="all"><span>📁</span> All Passwords</li>
-        <li class="category-item" data-category="social"><span>🌐</span> Social Media</li>
-        <li class="category-item" data-category="banking"><span>💳</span> Banking</li>
-        <li class="category-item" data-category="email"><span>📧</span> Email</li>
-        <li class="category-item" data-category="work"><span>💼</span> Work</li>
-        <li class="category-item" data-category="gaming"><span>🎮</span> Gaming</li>
-        <li class="category-item" data-category="shopping"><span>🛒</span> Shopping</li>
-        <li class="category-item" data-category="other"><span>📦</span> Other</li>
-      </ul>
-      
-      <div style="margin-top: 30px;">
-        <button class="btn" onclick="openAddModal()" style="width: 100%;">➕ New Password</button>
-        <button class="btn" onclick="showHealthDashboard()" style="width: 100%; margin-top: 10px; background: #17a2b8;">🏥 Health Check</button>
-        <button class="btn btn-secondary" onclick="lockVault()" style="width: 100%; margin-top: 10px;">🔒 Lock Vault</button>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="backup-btn-row">
+          <button class="btn-sm" onclick="exportEncryptedVault()" title="Safe encrypted JSON backup">📦 Encrypted</button>
+          <button class="btn-sm" onclick="exportPlaintextVault()" title="Export plaintext (warning)">⚠️ Plaintext</button>
+        </div>
+        <a href="https://fard-pw.netlify.app/" target="_blank" rel="noopener noreferrer" class="btn-sm" style="width: 100%;">
+          <span>🎲 Password Generator &rarr;</span>
+        </a>
       </div>
     </aside>
-    
-    <main class="main-content">
-      <div class="top-bar">
-        <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search passwords..."/>
-        <div class="top-actions">
-          <button class="btn" onclick="exportVault()">📤 Export</button>
-          <button class="btn" onclick="importVault()">📥 Import</button>
-          <button class="btn btn-danger" onclick="logout()">🚪 Logout</button>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <!-- Toolbar -->
+      <div class="top-toolbar">
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchBox" class="search-input" placeholder="Search your vault... (Press '/' to focus)" oninput="handleSearch(this.value)">
+        </div>
+
+        <div class="toolbar-actions">
+          <button class="btn-new-item" onclick="openAddModal()">
+            <span>➕ New password</span>
+          </button>
+          <button class="btn-lock" onclick="lockVault()" title="Lock vault and clear encryption key from memory">
+            <span>🔒 Lock</span>
+          </button>
+          <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
+            <span id="themeIcon">🌙</span>
+          </button>
         </div>
       </div>
-      
-      <div id="entriesContainer" class="loading">
-        <div class="skeleton-grid">
-          <div class="skeleton-card">
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line short"></div>
-            <div class="skeleton-line medium"></div>
-          </div>
-          <div class="skeleton-card">
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line short"></div>
-            <div class="skeleton-line medium"></div>
-          </div>
-          <div class="skeleton-card">
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line short"></div>
-            <div class="skeleton-line medium"></div>
-          </div>
-        </div>
+
+      <!-- Credential Cards Grid -->
+      <div class="entries-grid" id="entriesContainer">
+        <!-- Rendered dynamically -->
       </div>
-      
-      <footer class="vault-footer">
-        A <a href="https://github.com/mehedyk" target="_blank" rel="noopener noreferrer">mehedyk</a> product. 
-        Works with <a href="https://pw-generator-fard.netlify.app" target="_blank" rel="noopener noreferrer">Fard Password Generator</a>. 
-        All rights reserved. &copy; <span id="vaultYear"></span>.
-      </footer>
     </main>
   </div>
-  
-  <!-- Add/Edit Modal -->
-  <div class="modal" id="entryModal">
-    <div class="modal-content">
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Add / Edit Modal -->
+  <div class="modal-backdrop" id="entryModal">
+    <div class="modal-card">
       <div class="modal-header">
-        <h2 class="modal-title" id="modalTitle">Add Password</h2>
-        <button class="close-btn" onclick="closeModal()">&times;</button>
+        <h3 class="modal-title" id="modalHeading">Add password</h3>
+        <button class="modal-close-btn" onclick="closeModal()">&times;</button>
       </div>
-      <form id="entryForm" onsubmit="saveEntry(event)">
-        <div class="form-group">
-          <label>Title *</label>
-          <input type="text" id="entryTitle" required placeholder="e.g., Gmail, Facebook"/>
+
+      <form id="entryForm" onsubmit="handleSaveEntry(event)">
+        <div class="modal-body">
+          <div class="modal-field-group">
+            <label class="modal-label" for="entryTitle">Service / Title *</label>
+            <input type="text" id="entryTitle" class="modal-input" required placeholder="e.g. GitHub, Google, Netflix">
+          </div>
+
+          <div class="modal-field-group">
+            <label class="modal-label" for="entryUsername">Username / Email</label>
+            <input type="text" id="entryUsername" class="modal-input" placeholder="username or email@example.com">
+          </div>
+
+          <div class="modal-field-group">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="modal-label" for="entryPassword">Password *</label>
+              <a href="https://fard-pw.netlify.app/" target="_blank" rel="noopener noreferrer" style="font-size: 0.78rem; color: var(--accent); text-decoration: none;">Generate with Fard &rarr;</a>
+            </div>
+            <input type="text" id="entryPassword" class="modal-input" required placeholder="Password">
+          </div>
+
+          <div class="modal-field-group">
+            <label class="modal-label" for="entryUrl">Website URL</label>
+            <input type="url" id="entryUrl" class="modal-input" placeholder="https://example.com">
+          </div>
+
+          <div class="modal-field-group">
+            <label class="modal-label" for="entryCategory">Category</label>
+            <select id="entryCategory" class="modal-input">
+              <option value="social">🌐 Social Media</option>
+              <option value="banking">💳 Banking</option>
+              <option value="email">📧 Email</option>
+              <option value="work">💼 Work</option>
+              <option value="gaming">🎮 Gaming</option>
+              <option value="shopping">🛒 Shopping</option>
+              <option value="other">📁 Other</option>
+            </select>
+          </div>
+
+          <div class="modal-field-group">
+            <label class="modal-label" for="entryNotes">Notes</label>
+            <textarea id="entryNotes" class="modal-input" rows="2" placeholder="Recovery codes, pin, etc."></textarea>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Username / Email</label>
-          <input type="text" id="entryUsername" placeholder="user@example.com"/>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-sm" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn-new-item">Save to vault</button>
         </div>
-        <div class="form-group">
-          <label>Password *</label>
-          <input type="password" id="entryPassword" required/>
-        </div>
-        <div class="form-group">
-          <label>Website URL</label>
-          <!-- SECURITY FIX: type="url" enforces http/https at browser level; JS also validates scheme -->
-          <input type="url" id="entryUrl" placeholder="https://example.com"/>
-        </div>
-        <div class="form-group">
-          <label>Category</label>
-          <select id="entryCategory">
-            <option value="social">🌐 Social Media</option>
-            <option value="banking">💳 Banking</option>
-            <option value="email">📧 Email</option>
-            <option value="work">💼 Work</option>
-            <option value="gaming">🎮 Gaming</option>
-            <option value="shopping">🛒 Shopping</option>
-            <option value="other">📦 Other</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Notes</label>
-          <textarea id="entryNotes" placeholder="Additional information..."></textarea>
-        </div>
-        <button type="submit" class="btn" style="width: 100%;">💾 Save</button>
       </form>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
-  
   <script type="module">
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-    
-    if (!SUPABASE_URL || !SUPABASE_KEY) {
-      console.error('❌ Environment variables not set!');
-      console.error('VITE_SUPABASE_URL:', SUPABASE_URL || 'MISSING');
-      console.error('VITE_SUPABASE_ANON_KEY:', SUPABASE_KEY ? 'Set ✅' : 'MISSING');
-      alert('Configuration error: Environment variables not set. Check Vercel settings.');
-    }
-    
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    
-    // Global state
-    let currentUser    = null;
-    let encryptionKey  = null;
-    let allEntries     = [];
+    import { deriveKey, encryptData, decryptData, isSafeUrl } from '/src/lib/crypto.js';
+    import { authService } from '/src/lib/auth-service.js';
+    import { vaultService } from '/src/lib/vault-service.js';
+
+    // Global in-memory vault state
+    let currentUser = null;
+    let encryptionKey = null;
+    let allEntries = [];
     let currentCategory = 'all';
-    let editingEntryId = null;
+    let editingId = null;
 
-    // ── SECURITY FIX: In-memory entry registry ────────────────────────────────
-    // Decrypted entries are stored in a Map keyed by ID.
-    // DOM card buttons reference ONLY the ID, never embedding plaintext or
-    // base64-encoded passwords as onclick attribute strings.
+    // Secure in-memory decrypted registry
     const entryRegistry = new Map();
-    // ─────────────────────────────────────────────────────────────────────────
 
-    // Crypto utilities
-    async function deriveKey(password, salt) {
-      const result = await argon2.hash({
-        pass: password,
-        salt: salt,
-        time: 4,
-        mem: 65536,
-        hashLen: 32,
-        parallelism: 4,
-        type: argon2.ArgonType.Argon2id
-      });
-      return result.hash;
-    }
-    
-    async function encryptData(data, key) {
-      const iv          = crypto.getRandomValues(new Uint8Array(12));
-      const encodedData = new TextEncoder().encode(JSON.stringify(data));
-      const cryptoKey   = await crypto.subtle.importKey('raw', key, { name: 'AES-GCM' }, false, ['encrypt']);
-      const encrypted   = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, cryptoKey, encodedData);
-      return {
-        encrypted: btoa(String.fromCharCode(...new Uint8Array(encrypted))),
-        iv:        btoa(String.fromCharCode(...iv))
-      };
-    }
-    
-    async function decryptData(encryptedData, iv, key) {
-      const cryptoKey      = await crypto.subtle.importKey('raw', key, { name: 'AES-GCM' }, false, ['decrypt']);
-      const encryptedBytes = Uint8Array.from(atob(encryptedData), c => c.charCodeAt(0));
-      const ivBytes        = Uint8Array.from(atob(iv),            c => c.charCodeAt(0));
-      const decrypted      = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ivBytes }, cryptoKey, encryptedBytes);
-      return JSON.parse(new TextDecoder().decode(decrypted));
+    // Theme Management
+    function initTheme() {
+      const theme = localStorage.getItem('theme') || 'dark';
+      applyTheme(theme);
     }
 
-    // ── SECURITY FIX: URL scheme validation ──────────────────────────────────
-    // Blocks javascript:, data:, and any other non-http(s) schemes from being
-    // rendered as clickable links, preventing potential XSS via URL fields.
-    function isSafeUrl(url) {
-      if (!url) return false;
-      try {
-        const parsed = new URL(url);
-        return parsed.protocol === 'https:' || parsed.protocol === 'http:';
-      } catch {
-        return false;
+    function applyTheme(theme) {
+      const html = document.documentElement;
+      const icon = document.getElementById('themeIcon');
+      if (theme === 'light') {
+        html.setAttribute('data-theme', 'light');
+        if (icon) icon.textContent = '☀️';
+      } else {
+        html.removeAttribute('data-theme');
+        if (icon) icon.textContent = '🌙';
       }
     }
-    // ─────────────────────────────────────────────────────────────────────────
-    
-    // Initialize vault
+
+    window.toggleTheme = function() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme', next);
+      applyTheme(next);
+    };
+
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 3500);
+    }
+
+    // Inactivity Auto-Lock (15 minutes)
+    let inactivityTimer;
+    function resetInactivity() {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        showToast('Vault auto-locked due to inactivity', 'error');
+        lockVault();
+      }, 15 * 60 * 1000);
+    }
+    ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => {
+      window.addEventListener(evt, resetInactivity, { passive: true });
+    });
+
+    // Vault Initialization
     async function initVault() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { window.location.href = '/login.html'; return; }
-      currentUser = user;
-      
-      const masterPassword = sessionStorage.getItem('master_password');
-      if (!masterPassword) { window.location.href = '/login.html'; return; }
-      
-      const { data: keyData } = await supabase.from('user_keys').select('salt').eq('user_id', user.id).single();
-      if (!keyData) { showNotification('Error loading vault', 'error'); return; }
-      
-      const salt = Uint8Array.from(atob(keyData.salt), c => c.charCodeAt(0));
-      encryptionKey = await deriveKey(masterPassword, salt);
-      
-      await loadEntries();
-    }
-    
-    async function loadEntries() {
-      const { data, error } = await supabase.from('vault_entries').select('*').eq('user_id', currentUser.id);
-      if (error) { showNotification('Error loading entries', 'error'); return; }
-      
-      allEntries = [];
-      entryRegistry.clear();  // reset registry on each load
+      await authService.init();
+      currentUser = authService.getUser();
 
-      for (const entry of data) {
-        try {
-          const decrypted = await decryptData(entry.encrypted_data, entry.iv, encryptionKey);
-          const full = {
-            id:         entry.id,
-            category:   entry.category,
-            favorite:   entry.favorite,
-            created_at: entry.created_at,
-            ...decrypted
-          };
-          allEntries.push(full);
-          entryRegistry.set(entry.id, full);  // store in registry for safe DOM access
-        } catch (e) {
-          console.error('Failed to decrypt entry:', e);
-        }
+      const masterPassword = sessionStorage.getItem('master_password');
+      if (!masterPassword || !currentUser) {
+        window.location.href = '/login.html';
+        return;
       }
-      
-      renderEntries();
+
+      try {
+        const salt = await vaultService.getSalt(currentUser.id);
+        if (!salt) {
+          showToast('Could not load vault salt', 'error');
+          return;
+        }
+
+        encryptionKey = await deriveKey(masterPassword, salt);
+        await refreshEntries();
+        resetInactivity();
+      } catch (err) {
+        console.error('Vault unlock error:', err);
+        showToast('Error decrypting vault', 'error');
+      }
     }
-    
+
+    async function refreshEntries() {
+      try {
+        const encryptedList = await vaultService.loadEntries(currentUser.id);
+        allEntries = [];
+        entryRegistry.clear();
+
+        for (const item of encryptedList) {
+          try {
+            const dec = await decryptData(item.encrypted_data, item.iv, encryptionKey);
+            const full = {
+              id: item.id,
+              category: item.category || 'other',
+              favorite: !!item.favorite,
+              created_at: item.created_at,
+              ...dec
+            };
+            allEntries.push(full);
+            entryRegistry.set(item.id, full);
+          } catch (decErr) {
+            console.error('Decryption failed for item:', item.id, decErr);
+          }
+        }
+
+        updateCategoryCounts();
+        updateHealthWidget();
+        renderEntries();
+      } catch (e) {
+        console.error('Failed to load entries:', e);
+      }
+    }
+
+    function updateCategoryCounts() {
+      const counts = { all: allEntries.length, favorites: 0 };
+      allEntries.forEach(e => {
+        if (e.favorite) counts.favorites++;
+        counts[e.category] = (counts[e.category] || 0) + 1;
+      });
+
+      document.getElementById('count-all').textContent = counts.all;
+      document.getElementById('count-favorites').textContent = counts.favorites;
+      ['social', 'banking', 'email', 'work', 'gaming', 'shopping', 'other'].forEach(cat => {
+        const el = document.getElementById(`count-${cat}`);
+        if (el) el.textContent = counts[cat] || 0;
+      });
+    }
+
+    function updateHealthWidget() {
+      const statusEl = document.getElementById('healthStatus');
+      const total = allEntries.length;
+      if (total === 0) {
+        statusEl.textContent = 'No passwords saved yet';
+        return;
+      }
+
+      let weak = 0;
+      allEntries.forEach(e => {
+        if (!e.password || e.password.length < 12) weak++;
+      });
+
+      if (weak > 0) {
+        statusEl.innerHTML = `<span style="color: var(--danger)">⚠️ ${weak} weak password${weak > 1 ? 's' : ''}</span>`;
+      } else {
+        statusEl.innerHTML = `<span style="color: var(--accent)">✓ All passwords strong (12+ chars)</span>`;
+      }
+    }
+
     function renderEntries() {
-      const container  = document.getElementById('entriesContainer');
-      let filtered = currentCategory === 'all'
-        ? allEntries
-        : allEntries.filter(e => e.category === currentCategory);
-      
-      const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+      const container = document.getElementById('entriesContainer');
+      const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
+
+      let filtered = allEntries;
+      if (currentCategory === 'favorites') {
+        filtered = filtered.filter(e => e.favorite);
+      } else if (currentCategory !== 'all') {
+        filtered = filtered.filter(e => e.category === currentCategory);
+      }
+
       if (searchTerm) {
         filtered = filtered.filter(e =>
-          e.title?.toLowerCase().includes(searchTerm) ||
-          e.username?.toLowerCase().includes(searchTerm)
+          (e.title && e.title.toLowerCase().includes(searchTerm)) ||
+          (e.username && e.username.toLowerCase().includes(searchTerm)) ||
+          (e.url && e.url.toLowerCase().includes(searchTerm))
         );
       }
-      
+
       if (filtered.length === 0) {
         container.innerHTML = `
           <div class="empty-state">
-            <div class="empty-state-icon">🔐</div>
-            <h2>No passwords yet</h2>
-            <p>Click "New Password" to add your first entry</p>
-          </div>`;
+            <div class="empty-icon">🔐</div>
+            <h3 class="empty-title">${searchTerm ? 'No matching passwords' : 'Your vault is empty'}</h3>
+            <p class="empty-desc">${searchTerm ? 'Try a different search query' : 'Click "New password" to add your first encrypted credential.'}</p>
+            <button class="btn-new-item" onclick="openAddModal()">➕ Add your first password</button>
+          </div>
+        `;
         return;
       }
 
-      // ── SECURITY FIX: No passwords or sensitive data in DOM attributes ──
-      // Each card uses only the UUID as an identifier in onclick handlers.
-      // Toggling/copying looks up the value from entryRegistry at call time.
-      container.innerHTML = '<div class="entries-grid">' + filtered.map(entry => `
-        <div class="entry-card">
-          <div class="entry-header">
-            <div class="entry-title">${escapeHtml(entry.title)}</div>
-            <div class="entry-actions">
-              <button class="icon-btn" onclick="checkEntryBreach('${entry.id}')" title="Check breach">🔍</button>
-              <button class="icon-btn" onclick="editEntry('${entry.id}')" title="Edit">✏️</button>
-              <button class="icon-btn" onclick="deleteEntry('${entry.id}')" title="Delete">🗑️</button>
+      container.innerHTML = filtered.map(item => {
+        const initial = (item.title || 'P').slice(0, 2).toUpperCase();
+        const safeUrl = isSafeUrl(item.url) ? item.url : null;
+
+        return `
+          <div class="entry-card" id="card-${item.id}">
+            <div class="card-top">
+              <div class="card-header-group">
+                <div class="service-avatar">${initial}</div>
+                <div>
+                  <div class="service-title">${escapeHtml(item.title || 'Untitled')}</div>
+                  <div class="service-cat-pill">${escapeHtml(item.category || 'other')}</div>
+                </div>
+              </div>
+              <button class="favorite-toggle ${item.favorite ? 'is-fav' : ''}" onclick="toggleFavorite('${item.id}')" title="Favorite">
+                ${item.favorite ? '★' : '☆'}
+              </button>
             </div>
-          </div>
-          ${entry.username ? `
-            <div class="entry-field">
-              <label>Username</label>
-              <div>
-                ${escapeHtml(entry.username)}
-                <button class="icon-btn" onclick="copyEntryField('${entry.id}','username')" title="Copy username">📋</button>
+
+            <div class="card-field">
+              <span class="field-text">${escapeHtml(item.username || 'No username')}</span>
+              <button class="icon-action-btn" onclick="copyText('${escapeHtml(item.username || '')}', 'Username copied!')" title="Copy username">📋</button>
+            </div>
+
+            <div class="card-field">
+              <span class="field-text" id="pwd-display-${item.id}">••••••••••••</span>
+              <div class="field-actions">
+                <button class="icon-action-btn" onclick="togglePasswordView('${item.id}')" title="Reveal / hide">👁️</button>
+                <button class="icon-action-btn" onclick="copyPassword('${item.id}')" title="Copy password">📋</button>
               </div>
             </div>
-          ` : ''}
-          <div class="entry-field">
-            <label>Password</label>
-            <div class="password-field">
-              <span class="password-value password-hidden" id="pwd-${entry.id}">••••••••••••</span>
-              <button class="icon-btn" onclick="togglePassword('${entry.id}')" title="Show/hide">👁️</button>
-              <button class="icon-btn" onclick="copyEntryField('${entry.id}','password')" title="Copy password">📋</button>
+
+            <div class="card-footer">
+              <div>
+                ${safeUrl ? `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none;">Launch ↗</a>` : '<span>Local credential</span>'}
+              </div>
+              <div class="card-actions-group">
+                <button class="card-btn" onclick="editEntry('${item.id}')">Edit</button>
+                <button class="card-btn delete-btn" onclick="deleteEntry('${item.id}')">Delete</button>
+              </div>
             </div>
           </div>
-          ${isSafeUrl(entry.url) ? `
-            <div class="entry-field">
-              <label>Website</label>
-              <a href="${escapeHtml(entry.url)}" target="_blank" rel="noopener noreferrer" style="color: var(--accent-green);">
-                🔗 ${escapeHtml(entry.url)}
-              </a>
-            </div>
-          ` : entry.url ? `
-            <div class="entry-field">
-              <label>Website</label>
-              <span style="color: var(--text-secondary);">${escapeHtml(entry.url)}</span>
-            </div>
-          ` : ''}
-        </div>
-      `).join('') + '</div>';
-    }
-    
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text || '';
-      return div.innerHTML;
+        `;
+      }).join('');
     }
 
-    // ── SECURITY FIX: Registry-based reveal ──────────────────────────────────
-    // Reads password from in-memory Map — never from DOM attributes.
-    window.togglePassword = function(id) {
-      const el    = document.getElementById(`pwd-${id}`);
-      const entry = entryRegistry.get(id);
-      if (!entry) return;
-      if (el.classList.contains('password-hidden')) {
-        el.textContent = entry.password;
-        el.classList.remove('password-hidden');
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    window.setCategory = function(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`cat-${cat}`);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderEntries();
+    };
+
+    window.handleSearch = function(val) {
+      renderEntries();
+    };
+
+    // Keyboard shortcut '/' to search
+    window.addEventListener('keydown', e => {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        document.getElementById('searchBox').focus();
+      }
+    });
+
+    window.togglePasswordView = function(id) {
+      const item = entryRegistry.get(id);
+      if (!item) return;
+      const el = document.getElementById(`pwd-display-${id}`);
+      if (!el) return;
+
+      if (el.textContent === '••••••••••••') {
+        el.textContent = item.password || '';
+        el.style.color = 'var(--accent)';
       } else {
         el.textContent = '••••••••••••';
-        el.classList.add('password-hidden');
+        el.style.color = 'var(--text-secondary)';
       }
     };
 
-    // ── SECURITY FIX: Registry-based clipboard copy ───────────────────────────
-    window.copyEntryField = function(id, field) {
-      const entry = entryRegistry.get(id);
-      if (!entry) return;
-      navigator.clipboard.writeText(entry[field] || '');
-      showNotification('Copied to clipboard!', 'success');
-
-      // Auto-clear clipboard after 30 seconds
-      setTimeout(() => {
-        navigator.clipboard.writeText('').catch(() => {});
-      }, 30000);
+    window.copyPassword = function(id) {
+      const item = entryRegistry.get(id);
+      if (!item || !item.password) return;
+      navigator.clipboard.writeText(item.password).then(() => {
+        showToast('Password copied to clipboard!');
+      });
     };
 
-    // Keep legacy copyText for any other uses (export confirmations, etc.)
-    window.copyText = function(text) {
-      navigator.clipboard.writeText(text);
-      showNotification('Copied to clipboard!', 'success');
+    window.copyText = function(text, successMsg) {
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(successMsg || 'Copied!');
+      });
     };
-    // ─────────────────────────────────────────────────────────────────────────
-    
-    window.openAddModal = function() {
-      editingEntryId = null;
-      document.getElementById('modalTitle').textContent = 'Add Password';
-      document.getElementById('entryForm').reset();
-      document.getElementById('entryModal').classList.add('active');
-    };
-    
-    window.editEntry = function(id) {
-      const entry = entryRegistry.get(id);
-      if (!entry) return;
-      
-      editingEntryId = id;
-      document.getElementById('modalTitle').textContent = 'Edit Password';
-      document.getElementById('entryTitle').value    = entry.title    || '';
-      document.getElementById('entryUsername').value = entry.username || '';
-      document.getElementById('entryPassword').value = entry.password || '';
-      document.getElementById('entryUrl').value      = entry.url      || '';
-      document.getElementById('entryCategory').value = entry.category || 'other';
-      document.getElementById('entryNotes').value    = entry.notes    || '';
-      document.getElementById('entryModal').classList.add('active');
-    };
-    
-    window.closeModal = function() {
-      document.getElementById('entryModal').classList.remove('active');
-    };
-    
-    window.saveEntry = async function(e) {
-      e.preventDefault();
-      
-      const rawUrl  = document.getElementById('entryUrl').value.trim();
 
-      // ── SECURITY FIX: Reject unsafe URL schemes before save ──────────────
-      if (rawUrl && !isSafeUrl(rawUrl)) {
-        showNotification('❌ URL must start with https:// or http://', 'error');
-        return;
-      }
-
-      const data = {
-        title:    document.getElementById('entryTitle').value,
-        username: document.getElementById('entryUsername').value,
-        password: document.getElementById('entryPassword').value,
-        url:      rawUrl,
-        notes:    document.getElementById('entryNotes').value
-      };
-      
-      const category         = document.getElementById('entryCategory').value;
-      const { encrypted, iv } = await encryptData(data, encryptionKey);
-      
-      if (editingEntryId) {
-        const { error } = await supabase.from('vault_entries').update({
-          encrypted_data: encrypted,
-          iv:             iv,
-          category:       category
-        }).eq('id', editingEntryId);
-        
-        if (error) { showNotification('Error updating entry', 'error'); return; }
-        showNotification('Entry updated!', 'success');
-      } else {
-        const { error } = await supabase.from('vault_entries').insert({
-          user_id:        currentUser.id,
-          encrypted_data: encrypted,
-          iv:             iv,
-          auth_tag:       '',
-          category:       category
-        });
-        
-        if (error) { showNotification('Error adding entry', 'error'); return; }
-        showNotification('Entry added!', 'success');
-      }
-      
-      closeModal();
-      await loadEntries();
+    window.toggleFavorite = async function(id) {
+      const item = entryRegistry.get(id);
+      if (!item) return;
+      const nextFav = !item.favorite;
+      item.favorite = nextFav;
+      await vaultService.updateEntry(currentUser.id, id, { favorite: nextFav });
+      updateCategoryCounts();
+      renderEntries();
     };
-    
+
     window.deleteEntry = async function(id) {
-      if (!confirm('Delete this password?')) return;
-      
-      const { error } = await supabase.from('vault_entries').delete().eq('id', id);
-      if (error) { showNotification('Error deleting entry', 'error'); return; }
-      
+      const item = entryRegistry.get(id);
+      const title = item ? item.title : 'this password';
+      if (!confirm(`Delete ${title} permanently from your vault?`)) return;
+
+      await vaultService.deleteEntry(currentUser.id, id);
       entryRegistry.delete(id);
-      showNotification('Entry deleted', 'success');
-      await loadEntries();
+      allEntries = allEntries.filter(e => e.id !== id);
+      showToast('Password deleted.');
+      updateCategoryCounts();
+      updateHealthWidget();
+      renderEntries();
     };
-    
+
+    // Modal Operations
+    window.openAddModal = function() {
+      editingId = null;
+      document.getElementById('modalHeading').textContent = 'Add password';
+      document.getElementById('entryForm').reset();
+      document.getElementById('entryModal').style.display = 'flex';
+    };
+
+    window.editEntry = function(id) {
+      const item = entryRegistry.get(id);
+      if (!item) return;
+
+      editingId = id;
+      document.getElementById('modalHeading').textContent = 'Edit password';
+      document.getElementById('entryTitle').value = item.title || '';
+      document.getElementById('entryUsername').value = item.username || '';
+      document.getElementById('entryPassword').value = item.password || '';
+      document.getElementById('entryUrl').value = item.url || '';
+      document.getElementById('entryCategory').value = item.category || 'other';
+      document.getElementById('entryNotes').value = item.notes || '';
+      document.getElementById('entryModal').style.display = 'flex';
+    };
+
+    window.closeModal = function() {
+      document.getElementById('entryModal').style.display = 'none';
+      editingId = null;
+    };
+
+    window.handleSaveEntry = async function(e) {
+      e.preventDefault();
+      const title = document.getElementById('entryTitle').value.trim();
+      const username = document.getElementById('entryUsername').value.trim();
+      const password = document.getElementById('entryPassword').value;
+      const url = document.getElementById('entryUrl').value.trim();
+      const category = document.getElementById('entryCategory').value;
+      const notes = document.getElementById('entryNotes').value.trim();
+
+      const sensitivePayload = { title, username, password, url, notes };
+      const encrypted = await encryptData(sensitivePayload, encryptionKey);
+
+      if (editingId) {
+        await vaultService.updateEntry(currentUser.id, editingId, {
+          encrypted_data: encrypted.encrypted_data,
+          iv: encrypted.iv,
+          category,
+          favorite: entryRegistry.get(editingId)?.favorite || false
+        });
+        showToast('Password updated successfully!');
+      } else {
+        await vaultService.createEntry(currentUser.id, {
+          encrypted_data: encrypted.encrypted_data,
+          iv: encrypted.iv,
+          category,
+          favorite: false
+        });
+        showToast('Password encrypted & saved!');
+      }
+
+      closeModal();
+      await refreshEntries();
+    };
+
+    // Export Encrypted
+    window.exportEncryptedVault = async function() {
+      const rawEntries = await vaultService.loadEntries(currentUser.id);
+      const salt = await vaultService.getSalt(currentUser.id);
+      const blob = new Blob([JSON.stringify({
+        version: '2.0',
+        exportedAt: new Date().toISOString(),
+        salt,
+        entries: rawEntries
+      }, null, 2)], { type: 'application/json' });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fard_vault_encrypted_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Encrypted backup downloaded!');
+    };
+
+    // Export Plaintext (with explicit confirmation)
+    window.exportPlaintextVault = function() {
+      const confirmed = confirm('⚠️ WARNING: This will export your passwords in PLAIN TEXT!\n\nAnyone who obtains this file will be able to read all your credentials.\n\nAre you sure you want to proceed?');
+      if (!confirmed) return;
+
+      const plaintextList = allEntries.map(e => ({
+        title: e.title,
+        username: e.username,
+        password: e.password,
+        url: e.url,
+        category: e.category,
+        notes: e.notes
+      }));
+
+      const blob = new Blob([JSON.stringify(plaintextList, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fard_vault_plaintext_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Plaintext file exported.');
+    };
+
     window.lockVault = function() {
       sessionStorage.removeItem('master_password');
+      sessionStorage.removeItem('user_id');
+      sessionStorage.removeItem('user_email');
+      encryptionKey = null;
+      entryRegistry.clear();
       window.location.href = '/login.html';
     };
-    
-    window.logout = async function() {
-      await supabase.auth.signOut();
-      sessionStorage.clear();
-      window.location.href = '/';
-    };
-    
-    window.exportVault = async function() {
-      const exportModal = `
-        <div class="modal active" id="exportModal" onclick="if(event.target === this) closeExportModal()">
-          <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="modal-header">
-              <h2 class="modal-title">📤 Export Vault</h2>
-              <button class="close-btn" onclick="closeExportModal()">&times;</button>
-            </div>
-            <div style="padding: 20px 0;">
-              <p style="margin-bottom: 20px;">Choose export format:</p>
-              <button class="btn" onclick="doExport(true)" style="width: 100%; margin-bottom: 15px; background: #28a745;">
-                🔒 Encrypted Export (Recommended)
-                <div style="font-size: 0.85em; font-weight: normal; margin-top: 5px;">Password-protected, safe to store anywhere</div>
-              </button>
-              <button class="btn btn-danger" onclick="doExport(false)" style="width: 100%;">
-                ⚠️ Plain Text Export (Not Recommended)
-                <div style="font-size: 0.85em; font-weight: normal; margin-top: 5px;">Unencrypted, keep this file secure!</div>
-              </button>
-            </div>
-            <button class="btn btn-secondary" onclick="closeExportModal()" style="width: 100%;">Cancel</button>
-          </div>
-        </div>`;
-      document.body.insertAdjacentHTML('beforeend', exportModal);
-    };
-    
-    window.closeExportModal = function() {
-      const modal = document.getElementById('exportModal');
-      if (modal) modal.remove();
-    };
-    
-    window.doExport = async function(encrypted) {
-      closeExportModal();
-      
-      try {
-        const vaultData = {
-          version:  '1.0',
-          exported: new Date().toISOString(),
-          encrypted,
-          entries:  allEntries.map(entry => ({
-            id:         entry.id,
-            title:      entry.title,
-            username:   entry.username,
-            password:   entry.password,
-            url:        entry.url,
-            notes:      entry.notes,
-            category:   entry.category,
-            created_at: entry.created_at
-          }))
-        };
-        
-        let dataStr, filename;
-        
-        if (encrypted) {
-          const masterPassword = sessionStorage.getItem('master_password');
-          if (!masterPassword) { showNotification('Session expired. Please login again.', 'error'); return; }
-          
-          const { encrypted: encryptedData, iv } = await encryptData(vaultData, encryptionKey);
-          
-          dataStr  = JSON.stringify({ version: '1.0', encrypted: true, data: encryptedData, iv, exported: new Date().toISOString() }, null, 2);
-          filename = `fard-vault-encrypted-${new Date().toISOString().split('T')[0]}.json`;
-          showNotification('✅ Encrypted export created!', 'success');
-        } else {
-          if (!confirm('⚠️ WARNING: This will export your passwords in PLAIN TEXT!\n\nAnyone who gets this file can read all your passwords.\n\nAre you absolutely sure?')) return;
-          
-          dataStr  = JSON.stringify(vaultData, null, 2);
-          filename = `fard-vault-PLAINTEXT-${new Date().toISOString().split('T')[0]}.json`;
-          showNotification('⚠️ Plain text export created. Keep secure!', 'warning');
-        }
-        
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url  = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href     = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-      } catch (error) {
-        console.error('Export error:', error);
-        showNotification('Failed to export vault', 'error');
-      }
-    };
-    
-    window.importVault = function() {
-      const input = document.createElement('input');
-      input.type   = 'file';
-      input.accept = '.json';
-      input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        try {
-          const text = await file.text();
-          const data = JSON.parse(text);
-          
-          let entries;
-          
-          if (data.encrypted && data.data && data.iv) {
-            showNotification('Decrypting import file...', 'info');
-            try {
-              const decryptedData = await decryptData(data.data, data.iv, encryptionKey);
-              entries = decryptedData.entries;
-            } catch (decryptError) {
-              showNotification('❌ Failed to decrypt. Wrong master password?', 'error');
-              return;
-            }
-          } else if (data.entries && Array.isArray(data.entries)) {
-            entries = data.entries;
-          } else {
-            throw new Error('Invalid backup file format');
-          }
-          
-          if (!entries || entries.length === 0) {
-            showNotification('No entries found in backup file', 'warning');
-            return;
-          }
-          
-          if (!confirm(`Import ${entries.length} entries? This will add them to your vault.`)) return;
-          
-          let imported = 0;
-          for (const entry of entries) {
-            const { encrypted, iv } = await encryptData({
-              title:    entry.title,
-              username: entry.username,
-              password: entry.password,
-              url:      entry.url,
-              notes:    entry.notes
-            }, encryptionKey);
-            
-            const { error } = await supabase.from('vault_entries').insert({
-              user_id:        currentUser.id,
-              encrypted_data: encrypted,
-              iv,
-              auth_tag:       '',
-              category:       entry.category || 'other'
-            });
-            
-            if (!error) imported++;
-          }
-          
-          showNotification(`✅ Successfully imported ${imported} entries!`, 'success');
-          await loadEntries();
-        } catch (error) {
-          console.error('Import error:', error);
-          showNotification('Failed to import vault: ' + error.message, 'error');
-        }
-      };
-      input.click();
-    };
-    
-    window.toggleTheme = function() {
-      const html = document.documentElement;
-      const icon = document.getElementById('themeIcon');
-      if (html.getAttribute('data-theme') === 'light') {
-        html.removeAttribute('data-theme');
-        icon.textContent = '🌙';
-        localStorage.setItem('theme', 'dark');
-      } else {
-        html.setAttribute('data-theme', 'light');
-        icon.textContent = '☀️';
-        localStorage.setItem('theme', 'light');
-      }
-    };
-    
-    function showNotification(message, type = 'success') {
-      document.querySelectorAll('.notification').forEach(n => n.remove());
-      const notif = document.createElement('div');
-      notif.className  = `notification ${type}`;
-      notif.textContent = message;
-      document.body.appendChild(notif);
-      setTimeout(() => notif.remove(), 3000);
-    }
-    
-    // Password Breach Check (HaveIBeenPwned k-anonymity — only 5-char prefix sent)
-    async function checkPasswordBreach(password) {
-      try {
-        const encoder    = new TextEncoder();
-        const data       = encoder.encode(password);
-        const hashBuffer = await crypto.subtle.digest('SHA-1', data);
-        const hashHex    = Array.from(new Uint8Array(hashBuffer))
-          .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-        
-        const prefix = hashHex.slice(0, 5);
-        const suffix = hashHex.slice(5);
-        
-        const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
-        const text     = await response.text();
-        
-        if (text.includes(suffix)) {
-          const count = text.split('\n').find(line => line.startsWith(suffix))?.split(':')[1] || '0';
-          return { compromised: true, count: parseInt(count), message: `Found in ${parseInt(count).toLocaleString()} breaches!` };
-        }
-        return { compromised: false, message: 'Not found in breaches' };
-      } catch (error) {
-        return { compromised: false, message: 'Could not check' };
-      }
-    }
-    
-    window.checkEntryBreach = async function(entryId) {
-      const entry = entryRegistry.get(entryId);
-      if (!entry) return;
-      
-      showNotification('Checking for breaches...', 'info');
-      const result = await checkPasswordBreach(entry.password);
-      
-      if (result.compromised) {
-        showNotification(`⚠️ ${entry.title}: ${result.message}`, 'error');
-      } else {
-        showNotification(`✅ ${entry.title}: ${result.message}`, 'success');
-      }
-    };
-    
-    // Vault Health Analysis
-    function analyzeVaultHealth() {
-      const passwords = {};
-      let weak = 0, reused = 0, old = 0, strong = 0;
-      
-      allEntries.forEach(entry => {
-        const pwd = entry.password;
-        if (pwd.length < 12) weak++;
-        else if (pwd.length >= 16 && /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /[0-9]/.test(pwd) && /[^A-Za-z0-9]/.test(pwd)) strong++;
-        
-        if (passwords[pwd]) reused++;
-        passwords[pwd] = true;
-        
-        const created = new Date(entry.created_at);
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-        if (created < sixMonthsAgo) old++;
-      });
-      
-      const total = allEntries.length;
-      return {
-        total, weak, reused, old, strong,
-        weakPercent:   Math.round((weak   / total) * 100) || 0,
-        reusedPercent: Math.round((reused / total) * 100) || 0,
-        oldPercent:    Math.round((old    / total) * 100) || 0,
-        strongPercent: Math.round((strong / total) * 100) || 0
-      };
-    }
-    
-    window.showHealthDashboard = function() {
-      const health = analyzeVaultHealth();
-      const dashboardHTML = `
-        <div class="modal active" onclick="if(event.target === this) closeHealthDashboard()" id="healthModal">
-          <div class="modal-content" style="max-width: 600px;" onclick="event.stopPropagation()">
-            <div class="modal-header">
-              <h2 class="modal-title">🏥 Vault Health Dashboard</h2>
-              <button class="close-btn" onclick="closeHealthDashboard()">&times;</button>
-            </div>
-            <div style="padding: 20px 0;">
-              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
-                <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; text-align: center;">
-                  <div style="font-size: 2.5em; font-weight: bold; color: var(--accent-green);">${health.total}</div>
-                  <div style="color: var(--text-secondary); font-size: 0.9em;">Total Passwords</div>
-                </div>
-                <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; text-align: center;">
-                  <div style="font-size: 2.5em; font-weight: bold; color: #28a745;">${health.strong}</div>
-                  <div style="color: var(--text-secondary); font-size: 0.9em;">Strong (${health.strongPercent}%)</div>
-                </div>
-                <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; text-align: center;">
-                  <div style="font-size: 2.5em; font-weight: bold; color: #ff4444;">${health.weak}</div>
-                  <div style="color: var(--text-secondary); font-size: 0.9em;">Weak (${health.weakPercent}%)</div>
-                </div>
-                <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; text-align: center;">
-                  <div style="font-size: 2.5em; font-weight: bold; color: #ffc107;">${health.reused}</div>
-                  <div style="color: var(--text-secondary); font-size: 0.9em;">Reused (${health.reusedPercent}%)</div>
-                </div>
-              </div>
-              <div style="background: var(--card-bg); padding: 15px; border-radius: 10px;">
-                <h3 style="margin-bottom: 10px;">📊 Recommendations</h3>
-                ${health.weak   > 0 ? `<p style="color: #ff4444; margin: 5px 0;">🔴 Update ${health.weak} weak passwords</p>`     : ''}
-                ${health.reused > 0 ? `<p style="color: #ffc107; margin: 5px 0;">🟡 ${health.reused} passwords are reused</p>`     : ''}
-                ${health.old    > 0 ? `<p style="color: #17a2b8; margin: 5px 0;">🔵 ${health.old} passwords are 6+ months old</p>` : ''}
-                ${health.weak === 0 && health.reused === 0 && health.old === 0
-                  ? `<p style="color: #28a745;">✅ Excellent vault health!</p>` : ''}
-              </div>
-            </div>
-            <button class="btn" onclick="closeHealthDashboard()" style="width: 100%;">Close</button>
-          </div>
-        </div>`;
-      document.body.insertAdjacentHTML('beforeend', dashboardHTML);
-    };
-    
-    window.closeHealthDashboard = function() {
-      const modal = document.getElementById('healthModal');
-      if (modal) modal.remove();
-    };
-    
-    // Event listeners
-    document.getElementById('searchBox').addEventListener('input', renderEntries);
-    
-    document.querySelectorAll('.category-item').forEach(item => {
-      item.addEventListener('click', function() {
-        document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
-        this.classList.add('active');
-        currentCategory = this.dataset.category;
-        renderEntries();
-      });
-    });
-    
-    const theme = localStorage.getItem('theme');
-    if (theme === 'light') {
-      document.documentElement.setAttribute('data-theme', 'light');
-      document.getElementById('themeIcon').textContent = '☀️';
-    }
-    
-    document.getElementById('vaultYear').textContent = new Date().getFullYear();
-    
+
+    initTheme();
     initVault();
   </script>
 </body>
