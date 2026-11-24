@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" fill="none">
+  <!-- Outer shell with chamfered top-right corner -->
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M0 0H14L18 4V18H0V0ZM3 3V15H15V6L12 3H3Z" fill="#B4FF39"/>
+  <!-- Inner stylized F -->
+  <path d="M5.5 6H12V8.5H8V9.5H11V12H8V15H5.5V6Z" fill="#B4FF39"/>
+</svg>
