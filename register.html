@@ -347,6 +347,15 @@
       transition: color 0.2s;
     }
 
+    .req-item span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
     .req-item.met {
       color: var(--accent);
     }
@@ -511,7 +520,9 @@
       <div class="form-top-nav">
         <a href="/" class="back-link">&larr; Back to home</a>
         <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
-          <span id="themeIcon">🌙</span>
+          <span id="themeIcon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          </span>
         </button>
       </div>
 
@@ -534,16 +545,18 @@
             <label class="field-label" for="password">Master password</label>
             <div class="input-wrapper">
               <input type="password" id="password" class="input-control" required autocomplete="new-password" minlength="12" placeholder="Create a strong master password" oninput="validatePassword()"/>
-              <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('password')" title="Show / hide">👁️</button>
+              <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('password')" title="Show / hide" aria-label="Toggle password visibility">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
             </div>
 
             <!-- Password Requirements Checklist -->
             <div class="req-list">
-              <div class="req-item" id="req-len"><span>○</span> At least 12 characters</div>
-              <div class="req-item" id="req-upper"><span>○</span> One uppercase letter</div>
-              <div class="req-item" id="req-lower"><span>○</span> One lowercase letter</div>
-              <div class="req-item" id="req-num"><span>○</span> One number</div>
-              <div class="req-item" id="req-special"><span>○</span> One special character</div>
+              <div class="req-item" id="req-len"><span><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> At least 12 characters</div>
+              <div class="req-item" id="req-upper"><span><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> One uppercase letter</div>
+              <div class="req-item" id="req-lower"><span><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> One lowercase letter</div>
+              <div class="req-item" id="req-num"><span><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> One number</div>
+              <div class="req-item" id="req-special"><span><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> One special character</div>
             </div>
           </div>
 
@@ -551,14 +564,19 @@
             <label class="field-label" for="confirmPassword">Confirm master password</label>
             <div class="input-wrapper">
               <input type="password" id="confirmPassword" class="input-control" required autocomplete="new-password" minlength="12" placeholder="Enter your master password again" oninput="checkMatch()"/>
-              <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('confirmPassword')" title="Show / hide">👁️</button>
+              <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('confirmPassword')" title="Show / hide" aria-label="Toggle password visibility">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
             </div>
             <div class="match-status" id="matchStatus"></div>
           </div>
 
           <!-- Critical Warning Box -->
           <div class="critical-warning-box">
-            <div class="warning-label">! THERE IS NO PASSWORD RESET</div>
+            <div class="warning-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>THERE IS NO PASSWORD RESET</span>
+            </div>
             <p class="warning-text">
               Your master password encrypts all your data. If you lose it, we cannot recover it. Write it down and store it securely.
             </p>
@@ -598,17 +616,34 @@
       applyTheme(savedTheme);
     }
 
+    const THEME_ICONS = {
+      moon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`,
+      sun: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>`
+    };
+
+    const EYE_ICONS = {
+      show: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>`,
+      hide: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>`
+    };
+
+    const STATUS_ICONS = {
+      check: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+      circle: `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>`,
+      matchCheck: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+      matchCross: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+    };
+
     function applyTheme(theme) {
       const html = document.documentElement;
       const icon = document.getElementById('themeIcon');
       if (theme === 'light') {
         html.setAttribute('data-theme', 'light');
         html.classList.remove('dark');
-        if (icon) icon.textContent = '☀️';
+        if (icon) icon.innerHTML = THEME_ICONS.sun;
       } else {
         html.setAttribute('data-theme', 'dark');
         html.classList.add('dark');
-        if (icon) icon.textContent = '🌙';
+        if (icon) icon.innerHTML = THEME_ICONS.moon;
       }
     }
 
@@ -644,7 +679,12 @@
 
     window.togglePasswordVisibility = function(fieldId) {
       const input = document.getElementById(fieldId);
-      input.type = input.type === 'password' ? 'text' : 'password';
+      const isPassword = input.type === 'password';
+      input.type = isPassword ? 'text' : 'password';
+      const btn = input.parentElement.querySelector('.toggle-pass-btn');
+      if (btn) {
+        btn.innerHTML = isPassword ? EYE_ICONS.hide : EYE_ICONS.show;
+      }
     };
 
     function showAlert(msg, type = 'error') {
@@ -683,12 +723,13 @@
 
     function updateCheckUI(id, passed) {
       const el = document.getElementById(id);
+      const span = el.querySelector('span');
       if (passed) {
         el.classList.add('met');
-        el.querySelector('span').textContent = '✓';
+        span.innerHTML = STATUS_ICONS.check;
       } else {
         el.classList.remove('met');
-        el.querySelector('span').textContent = '○';
+        span.innerHTML = STATUS_ICONS.circle;
       }
     }
 
@@ -698,14 +739,14 @@
       const statusEl = document.getElementById('matchStatus');
 
       if (!c) {
-        statusEl.textContent = '';
+        statusEl.innerHTML = '';
         checks.match = false;
       } else if (p === c) {
-        statusEl.textContent = '✓ Passwords match';
+        statusEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;">${STATUS_ICONS.matchCheck} Passwords match</span>`;
         statusEl.style.color = 'var(--accent)';
         checks.match = true;
       } else {
-        statusEl.textContent = '✗ Passwords do not match';
+        statusEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;">${STATUS_ICONS.matchCross} Passwords do not match</span>`;
         statusEl.style.color = 'var(--danger)';
         checks.match = false;
       }
